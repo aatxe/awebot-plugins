@@ -1,12 +1,12 @@
 [package]
 
-name = "libawebot"
+name = "plugin-template"
 version = "0.0.1"
 authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 
 [lib]
 
-name = "libawebot"
+name = "plugin-template"
 crate-type = ["dylib"]
 
 [dependencies.irc]
