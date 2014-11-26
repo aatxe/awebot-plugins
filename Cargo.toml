@@ -1,14 +1,18 @@
 [package]
 
-name = "plugin-template"
+name = "ddg"
 version = "0.0.1"
 authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 
 [lib]
 
-name = "plugin-template"
+name = "ddg"
 crate-type = ["dylib"]
 
 [dependencies.irc]
 
-git = "https://github.com/aaronweiss74/irc.git"
+irc = "~0.1.0"
+
+[dependencies.url]
+
+url = "~0.2.1"
