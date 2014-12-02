@@ -30,14 +30,16 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, _: &str, comman
                 let mut ret = String::new();
                 for user in users.into_iter() {
                     if user.get_name().len() == 0 { continue }
-                    ret.push_str(match user.access_level() {
-                        Owner  => "~",
-                        Admin  => "&",
-                        Oper   => "@",
-                        HalfOp => "%",
-                        Voice  => "+",
-                        _      => "",
-                    });
+                    for level in user.access_levels().iter() {
+                        ret.push_str(match level {
+                            &Owner  => "~",
+                            &Admin  => "&",
+                            &Oper   => "@",
+                            &HalfOp => "%",
+                            &Voice  => "+",
+                            _      => "",
+                        });
+                    }
                     ret.push_str(user.get_name());
                     ret.push_str(", ");
                     if ret.len() > 300 {
