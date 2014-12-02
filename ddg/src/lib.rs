@@ -29,7 +29,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
         if msg.starts_with("@ddg ") {
             let search = utf8_percent_encode(msg[5..], DEFAULT_ENCODE_SET);
             try!(server.send_privmsg(chan, format!("{}: https://duckduckgo.com/?q={}", 
-                                     user, search[])[]));
+                                     user, std::str::replace(search[], "%20", "+")[])[]));
         }
     }
     Ok(())
