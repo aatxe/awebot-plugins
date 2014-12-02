@@ -1,0 +1,15 @@
+[package]
+
+name = "choose"
+version = "0.0.1"
+authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
+
+[lib]
+
+name = "choose"
+crate-type = ["dylib"]
+
+[dependencies.irc]
+
+irc = "~0.4.1"
+
