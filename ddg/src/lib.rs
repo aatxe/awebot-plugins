@@ -2,16 +2,16 @@
 extern crate irc;
 extern crate url;
 
-use std::io::{BufferedStream, IoResult};
+use std::io::{BufferedReader, BufferedWriter, IoResult};
 use irc::conn::NetStream;
 use irc::data::Message;
-use irc::data::kinds::IrcStream;
+use irc::data::kinds::{IrcReader, IrcWriter};
 use irc::server::utils::Wrapper;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 #[no_mangle]
-pub fn process<'a>(server: &'a Wrapper<'a, BufferedStream<NetStream>>, message: Message) 
-    -> IoResult<()> {
+pub fn process<'a>(server: &'a Wrapper<'a, BufferedReader<NetStream>, BufferedWriter<NetStream>>, 
+                   message: Message) -> IoResult<()> {
     let mut args = Vec::new();
     let msg_args: Vec<_> = message.args.iter().map(|s| s[]).collect();
     args.push_all(msg_args[]);
@@ -22,8 +22,8 @@ pub fn process<'a>(server: &'a Wrapper<'a, BufferedStream<NetStream>>, message: 
     process_internal(server, source[], message.command[], args[])
 }
 
-pub fn process_internal<'a, T>(server: &'a Wrapper<'a, T>, source: &str, command: &str,
-                               args: &[&str]) -> IoResult<()> where T: IrcStream {
+pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, command: &str,
+                               args: &[&str]) -> IoResult<()> where T: IrcReader, U: IrcWriter {
     let user = source.find('!').map_or("", |i| source[..i]);
     if let ("PRIVMSG", [chan, msg]) = (command, args) {
         if msg.starts_with("@ddg ") {
