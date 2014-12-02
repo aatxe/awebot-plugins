@@ -1,0 +1,15 @@
+[package]
+
+name = "ddg"
+version = "0.0.1"
+authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
+
+[lib]
+
+name = "ddg"
+crate-type = ["dylib"]
+
+[dependencies.irc]
+
+irc = "~0.4.1"
+
