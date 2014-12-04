@@ -11,5 +11,5 @@ crate-type = ["dylib"]
 
 [dependencies]
 
-irc = "~0.4.1"
+irc = "*"
 hyper = "~0.0.6"
