@@ -1,8 +1,6 @@
 language: rust
 script:
-  - cargo build --verbose
-  - cargo test --verbose
-  - cargo doc --verbose
+  - for d in *; do if [ -d "$d" ]; then pushd "$d"; cargo build --verbose; cargo test --verbose; popd; fi done
 notifications:
   email:
     on_success: never
