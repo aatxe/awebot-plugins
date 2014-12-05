@@ -41,7 +41,6 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
     Ok(())
 }
 
-
 mod data {
     use std::string::ToString;
     use std::io::{File, FilePermission, InvalidInput, IoError, IoResult};
@@ -121,4 +120,35 @@ mod data {
             format!("{}: {}, {} said {}.", self.target, self.time, self.sender, self.message)
         }
     }
+}
+
+#[cfg(test)]
+mod test {
+    use std::default::Default;
+    use std::io::{MemReader, MemWriter};
+    use irc::conn::Connection;
+    use irc::server::{IrcServer, Server};
+    use irc::server::utils::Wrapper;
+
+    fn test_helper(input: &str) -> String {
+        let server = IrcServer::from_connection(Default::default(), Connection::new(
+            MemReader::new(input.as_bytes().to_vec()), MemWriter::new()
+        ));
+        for message in server.iter() {
+            println!("{}", message);
+            let mut args = Vec::new();
+            let msg_args: Vec<_> = message.args.iter().map(|s| s[]).collect();
+            args.push_all(msg_args[]);
+            if let Some(ref suffix) = message.suffix {
+                args.push(suffix[])
+            }
+            let source = message.prefix.unwrap_or(String::new());
+            super::process_internal(
+                &Wrapper::new(&server), source[], message.command[], args[]
+            ).unwrap();
+        }
+        String::from_utf8(server.conn().writer().get_ref().to_vec()).unwrap()
+    }
+    
+    // TODO: add tests
 }
