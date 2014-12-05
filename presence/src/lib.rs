@@ -51,11 +51,15 @@ mod test {
     use std::default::Default;
     use std::io::{MemReader, MemWriter};
     use irc::conn::Connection;
+    use irc::data::Config;
     use irc::server::{IrcServer, Server};
     use irc::server::utils::Wrapper;
 
     fn test_helper(input: &str) -> String {
-        let server = IrcServer::from_connection(Default::default(), Connection::new(
+        let server = IrcServer::from_connection(Config {
+            owners: Some(vec!["test".into_string()]),
+            .. Default::default()
+        }, Connection::new(
             MemReader::new(input.as_bytes().to_vec()), MemWriter::new()
         ));
         for message in server.iter() {
@@ -74,5 +78,9 @@ mod test {
         String::from_utf8(server.conn().writer().get_ref().to_vec()).unwrap()
     }
     
-    // TODO: add tests
+    #[test]
+    fn join() {
+        let data = test_helper(":test!test@test PRIVMSG #test :join #test #test2\r\n");
+        assert_eq!(data[], "JOIN #test\r\nJOIN #test2\r\nthis test should fail");
+    }
 }
