@@ -81,6 +81,12 @@ mod test {
     #[test]
     fn join() {
         let data = test_helper(":test!test@test PRIVMSG #test :join #test #test2\r\n");
-        assert_eq!(data[], "JOIN #test\r\nJOIN #test2\r\nthis test should fail");
+        assert_eq!(data[], "JOIN #test\r\nJOIN #test2\r\n");
+    }
+
+    #[test]
+    fn part() {
+        let data = test_helper(":test!test@test PRIVMSG #test :part #test #test2\r\n");
+        assert_eq!(data[], "PART #test\r\nPART #test2\r\n");
     }
 }
