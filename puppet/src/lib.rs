@@ -26,7 +26,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
     let user = source.find('!').map_or("", |i| source[..i]);
     if let ("PRIVMSG", [chan, msg]) = (command, args) {
         let tokens: Vec<_> = msg.split_str(" ").collect();
-        if chan != server.config().nickname[] { return Ok(()) }
+        if chan != server.config().nickname() { return Ok(()) }
         if server.config().is_owner(user) {
             if msg.starts_with("#") || msg.starts_with("$") {
                 if tokens.len() > 1 {
@@ -44,11 +44,16 @@ mod test {
     use std::default::Default;
     use std::io::{MemReader, MemWriter};
     use irc::conn::Connection;
+    use irc::data::Config;
     use irc::server::{IrcServer, Server};
     use irc::server::utils::Wrapper;
 
     fn test_helper(input: &str) -> String {
-        let server = IrcServer::from_connection(Default::default(), Connection::new(
+        let server = IrcServer::from_connection(Config {
+            owners: Some(vec!["test".into_string()]),
+            nickname: Some("test".into_string()),
+            ..Default::default()
+        }, Connection::new(
             MemReader::new(input.as_bytes().to_vec()), MemWriter::new()
         ));
         for message in server.iter() {
@@ -67,5 +72,16 @@ mod test {
         String::from_utf8(server.conn().writer().get_ref().to_vec()).unwrap()
     }
     
-    // TODO: add tests
+    #[test]
+    fn puppet_channel() {
+        let data = test_helper(":test!test@test PRIVMSG test :#test Hi there, friend.\r\n");
+        assert_eq!(data[], "PRIVMSG #test :Hi there, friend.\r\n");
+    }
+
+    #[test]
+    fn puppet_query() {
+        let data = test_helper(":test!test@test PRIVMSG test :$test Hi there, friend.\r\n");
+        assert_eq!(data[], "PRIVMSG test :Hi there, friend.\r\n");
+    }
+
 }

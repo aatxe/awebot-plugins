@@ -1,6 +1,13 @@
 language: rust
 script:
-  - for d in *; do if [ -d "$d" ]; then pushd "$d"; cargo build --verbose; cargo test --verbose; popd; fi done
+  - cd choose; cargo build --verbose; cargo test --verbose; cd ..
+  - cd ddg; cargo build --verbose; cargo test --verbose; cd ..
+  - cd keybase; cargo build --verbose; cargo test --verbose; cd ..
+  - cd presence; cargo build --verbose; cargo test --verbose; cd ..
+  - cd puppet; cargo build --verbose; cargo test --verbose; cd ..
+  - cd sys; cargo build --verbose; cargo test --verbose; cd ..
+  - cd tell; cargo build --verbose; cargo test --verbose; cd ..
+  - cd users; cargo build --verbose; cargo test --verbose; cd ..
 notifications:
   email:
     on_success: never
