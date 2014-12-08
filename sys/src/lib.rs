@@ -1,4 +1,4 @@
-#![feature(if_let, phase, slicing_syntax)]
+#![feature(phase, slicing_syntax)]
 extern crate irc;
 extern crate regex;
 #[phase(plugin)] extern crate regex_macros;
