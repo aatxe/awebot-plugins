@@ -1,0 +1,16 @@
+[package]
+
+name = "chatkov"
+version = "0.0.1"
+authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
+
+[lib]
+
+name = "chatkov"
+crate-type = ["dylib"]
+
+[dependencies]
+
+irc = "*"
+markov = "*"
+
