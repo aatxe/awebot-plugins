@@ -28,14 +28,24 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
                                args: &[&str]) -> IoResult<()> where T: IrcReader, U: IrcWriter {
     let user = source.find('!').map_or("", |i| source[..i]);
     if let ("PRIVMSG", [chan, msg]) = (command, args) {
+        let tokens: Vec<_> = msg.split_str(" ").collect();
         let path = Path::new("data/chatkov");
         if !msg.starts_with("@") {
             let mut file = File::open_mode(&path, FileMode::Append, FileAccess::Write);
             try!(file.write_line(replace(msg, ".", "\n")[]));
-        } else if msg.starts_with("@markov") {
-            let mut chain = Chain::new("START".into_string(), "END".into_string());
+        } else if tokens[0] == "@markov" {
+            let mut chain = Chain::for_strings();
             chain.feed_file(&path);
-            try!(server.send_privmsg(chan, format!("{}: {}", user, chain.generate_str())[]));
+            let msg = if tokens.len() > 1 {
+                chain.generate_str_from_token(tokens[1])
+            } else {
+                chain.generate_str()
+            };
+            try!(server.send_privmsg(chan, format!("{}: {}", user, if msg.len() > 0 { 
+                msg[] 
+            } else {
+                "That seed is unknown."   
+            })[]));
         }
     }
     Ok(())
