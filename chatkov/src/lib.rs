@@ -44,7 +44,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
             try!(server.send_privmsg(chan, format!("{}: {}", user, if msg.len() > 0 { 
                 msg[] 
             } else {
-                "That seed is unknown."   
+                "That seed is unknown."
             })[]));
         }
     }
