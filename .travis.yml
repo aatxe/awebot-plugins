@@ -6,9 +6,6 @@ script:
   - cd ../ddg
   - cargo build --verbose
   - cargo test --verbose
-  - cd ../keybase
-  - cargo build --verbose
-  - cargo test --verbose
   - cd ../presence
   - cargo build --verbose
   - cargo test --verbose
@@ -16,9 +13,6 @@ script:
   - cargo build --verbose
   - cargo test --verbose
   - cd ../sys
-  - cargo build --verbose
-  - cargo test --verbose
-  - cd ../tell
   - cargo build --verbose
   - cargo test --verbose
   - cd ../users
