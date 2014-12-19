@@ -9,10 +9,7 @@ authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 name = "ddg"
 crate-type = ["dylib"]
 
-[dependencies.irc]
+[dependencies]
 
 irc = "*"
-
-[dependencies.url]
-
-url = "~0.2.1"
+url = "*"
