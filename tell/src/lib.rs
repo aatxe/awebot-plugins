@@ -7,6 +7,7 @@ use std::io::{BufferedReader, BufferedWriter, IoResult};
 use irc::conn::NetStream;
 use irc::data::Message;
 use irc::data::kinds::{IrcReader, IrcWriter};
+use irc::server::Server;
 use irc::server::utils::Wrapper;
 
 #[no_mangle]
@@ -26,22 +27,33 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
                                   args: &[&str]) -> IoResult<()> where T: IrcReader, U: IrcWriter {
     let user = source.find('!').map_or("", |i| source[..i]);
     if let ("PRIVMSG", [chan, msg]) = (command, args) {
+        let resp = if chan == server.config().nickname() {
+            user
+        } else {
+            chan
+        };
         let mut messages = data::Messages::load();
         let tokens: Vec<_> = msg.split_str(" ").collect();
-        if tokens[0] == "@tell" {
+        if tokens[0] == "@tell" && tokens.len() > 1 && tokens[1] != server.config().nickname()
+        && msg.len() > 7 + tokens[1].len() {
             let message = msg[7+tokens[1].len()..];
             messages.add_message(tokens[1], message, user);
             let _ = messages.save();
-            try!(server.send_privmsg(chan, "I'll do it when I see them!"));
+            try!(server.send_privmsg(resp, format!("{}: I'll let them know!", user)[]));
+        } else if tokens[0] == "@tell" && tokens.len() > 1 
+               && tokens[1] == server.config().nickname() {
+            try!(server.send_privmsg(resp, format!("{}: I'm right here!", user)[]));
         }
         for msg in messages.get_messages(user).iter() {
-            try!(server.send_privmsg(chan, msg.to_string()[]));
+            try!(server.send_privmsg(resp, msg.to_string()[]));
         }
     }
     Ok(())
 }
 
 mod data {
+    use std::collections::HashMap;
+    use std::collections::hash_map::Entry::{Occupied, Vacant};
     use std::string::ToString;
     use std::io::{File, FilePermission, InvalidInput, IoError, IoResult};
     use std::io::fs::mkdir_recursive;
@@ -50,7 +62,7 @@ mod data {
 
     #[deriving(Encodable, Decodable)]
     pub struct Messages {
-        undelivered: Vec<Message>
+        undelivered: HashMap<String, Vec<Message>>
     }
 
     impl Messages {
@@ -59,7 +71,7 @@ mod data {
                 messages
             } else {
                 Messages {
-                    undelivered: Vec::new()
+                    undelivered: HashMap::new()
                 }
             }
         }
@@ -81,12 +93,17 @@ mod data {
         }
 
         pub fn add_message(&mut self, target: &str, message: &str, sender: &str) {
-            self.undelivered.push(Message::new(target, message, sender))
+            match self.undelivered.entry(target.into_string()) {
+                Occupied(mut e) => e.get_mut().push(Message::new(target, message, sender)),
+                Vacant(e) => { e.set(vec![Message::new(target, message, sender)]); },
+            }
         }
 
         pub fn get_messages(&mut self, user: &str) -> Vec<Message> {
-            let (ret, remain) = self.undelivered.partitioned(|m| m.is_target(user));
-            self.undelivered = remain;
+            let ret = match self.undelivered.remove(user) {
+                Some(v) => v,
+                None => vec![],
+            };
             let _ = self.save();
             ret
         }
@@ -109,15 +126,33 @@ mod data {
                 time: get_time(),
             }
         }
-        
-        pub fn is_target(&self, user: &str) -> bool {
-            self.target[] == user
-        }
     }
 
     impl ToString for Message {
         fn to_string(&self) -> String {
-            format!("{}: {}, {} said {}.", self.target, self.time, self.sender, self.message)
+            let dur = get_time() - self.time;
+            let ago = if dur.num_weeks() > 1 {
+                format!("{} weeks ago", dur.num_weeks())
+            } else if dur.num_weeks() == 1 {
+                "A week ago".into_string()
+            } else if dur.num_days() > 1 {
+                format!("{} days ago", dur.num_days())
+            } else if dur.num_days() == 1 {
+                "A day ago".into_string()
+            } else if dur.num_hours() > 1 {
+                format!("{} hours ago", dur.num_hours())
+            } else if dur.num_hours() == 1 {
+                "An hour ago".into_string()
+            } else if dur.num_minutes() > 1 {
+                format!("{} minutes ago", dur.num_minutes())
+            } else if dur.num_minutes() == 1 {
+                "A minute ago".into_string()
+            } else {
+                "Moments ago".into_string()  
+            };
+            format!("{}: {}, {} said {}{}", self.target, ago, self.sender, self.message,
+                if self.message.ends_with(".") || self.message.ends_with("!") || 
+                self.message.ends_with("?") { "" } else { "." })
         }
     }
 }
