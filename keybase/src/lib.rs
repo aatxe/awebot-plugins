@@ -1,11 +1,11 @@
 #![feature(slicing_syntax)]
 extern crate irc;
 extern crate hyper;
+extern crate serialize;
 
 use std::io::{BufferedReader, BufferedWriter, IoResult};
 use hyper::Url;
-use hyper::client::Request;
-use hyper::header::common::connection::{Connection, ConnectionOption};
+use hyper::client::Client;
 use irc::conn::NetStream;
 use irc::data::Message;
 use irc::data::kinds::{IrcReader, IrcWriter};
@@ -30,15 +30,95 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
     if let ("PRIVMSG", [chan, msg]) = (command, args) {
         let tokens: Vec<_> = msg.split_str(" ").collect();
         if tokens[0] == "@keybase" && tokens.len() == 2 {
-            let url = format!("https://keybase.io/_/api/1.0/user/lookup.json?usernames={}", 
-                              tokens[1]);
-            let mut req = Request::get(Url::parse(url[]).unwrap()).unwrap();
-            req.headers_mut().set(Connection(vec![ConnectionOption::Close]));
-            let res = req.start().unwrap().send().unwrap().read_to_string().unwrap();
-            println!("{}", res);
+            let url = format!("https://keybase.io/_/api/1.0/user/lookup.json?usernames={}&fields={}", 
+                              tokens[1], "proofs_summary");
+            let mut client = Client::new();
+            let res = client.get(Url::parse(url[]).unwrap()).send().unwrap().read_to_string().unwrap();
+            let lookup = data::LookUp::decode(res[]);
+            if let Ok(lookup) = lookup {
+                try!(server.send_privmsg(chan, format!("{}: Keybase: {} {}", user, tokens[1],
+                                                       lookup.display())[]));
+            } else {
+                try!(server.send_privmsg(chan, format!("{}: Something went wrong!", user)[]));
+            }
         }
     }
     Ok(())
+}
+
+mod data {
+    use std::io::{IoError, IoErrorKind, IoResult};
+    use serialize::json::decode;
+
+    #[deriving(Decodable, Show)]
+    pub struct LookUp {
+        them: Option<Vec<Keybase>>
+    }
+
+    impl LookUp {
+        pub fn decode(string: &str) -> IoResult<LookUp> {
+            decode(string).map_err(|e| IoError {
+                kind: IoErrorKind::InvalidInput,
+                desc: "Failed to decode configuration file.",
+                detail: Some(e.to_string()),
+            })
+        }
+
+        pub fn display(&self) -> String {
+            self.them.as_ref().map(|v| v[0].display()).unwrap()
+        }
+    }
+
+    #[deriving(Decodable, Show)]
+    pub struct Keybase {
+        id: String,
+        proofs_summary: ProofSummary
+    }
+
+    impl Keybase {
+        pub fn display(&self) -> String {
+            self.proofs_summary.display()
+        }
+    }
+
+    #[deriving(Decodable, Show)]
+    pub struct ProofSummary {
+        all: Vec<Proof>
+    }
+
+    impl ProofSummary {
+        pub fn display(&self) -> String {
+            let mut ret = String::new();
+            for proof in self.all.iter() {
+                ret.push_str(proof.display()[]);
+                ret.push_str(" ");
+            }
+            let len = ret.len() - 1;
+            ret.truncate(len);
+            ret
+        }
+    }
+
+    #[deriving(Decodable, Show)]
+    pub struct Proof {
+        proof_type: String,
+        nametag: String,
+    }
+
+    impl Proof {
+        pub fn display(&self) -> String {
+            format!("{}: {}", match self.proof_type[] {
+                "twitter"          => "Twitter",
+                "github"           => "GitHub",
+                "reddit"           => "Reddit",
+                "hackernews"       => "HackerNews",
+                "coinbase"         => "Coinbase",
+                "dns"              => "Website",
+                "generic_web_site" => "Website",
+                _                  => self.proof_type[]
+            }, self.nametag)
+        }
+    }
 }
 
 #[cfg(test)]
