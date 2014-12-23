@@ -4,7 +4,6 @@ extern crate markov;
 
 use std::io::{BufferedReader, BufferedWriter, FileAccess, FileMode, IoResult};
 use std::io::fs::File;
-use std::str::replace;
 use irc::conn::NetStream;
 use irc::data::Message;
 use irc::data::kinds::{IrcReader, IrcWriter};
@@ -32,7 +31,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
         let path = Path::new("data/chatkov");
         if !msg.starts_with("@") {
             let mut file = File::open_mode(&path, FileMode::Append, FileAccess::Write);
-            try!(file.write_line(replace(msg, ".", "\n")[]));
+            try!(file.write_line(msg.replace(".", "\n")[]));
         } else if tokens[0] == "@markov" {
             let mut chain = Chain::for_strings();
             chain.feed_file(&path);

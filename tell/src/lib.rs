@@ -1,7 +1,8 @@
 #![feature(slicing_syntax)]
 extern crate irc;
-extern crate serialize;
+extern crate "rustc-serialize" as rustc_serialize;
 extern crate time;
+
 
 use std::io::{BufferedReader, BufferedWriter, IoResult};
 use irc::conn::NetStream;
@@ -52,15 +53,16 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
 }
 
 mod data {
+    use std::borrow::ToOwned;
     use std::collections::HashMap;
     use std::collections::hash_map::Entry::{Occupied, Vacant};
     use std::string::ToString;
     use std::io::{File, FilePermission, InvalidInput, IoError, IoResult};
     use std::io::fs::mkdir_recursive;
-    use serialize::json::{decode, encode};
+    use rustc_serialize::json::{decode, encode};
     use time::{Timespec, get_time};
 
-    #[deriving(Encodable, Decodable)]
+    #[deriving(RustcEncodable, RustcDecodable)]
     pub struct Messages {
         undelivered: HashMap<String, Vec<Message>>
     }
@@ -93,7 +95,7 @@ mod data {
         }
 
         pub fn add_message(&mut self, target: &str, message: &str, sender: &str) {
-            match self.undelivered.entry(target.into_string()) {
+            match self.undelivered.entry(target.to_owned()) {
                 Occupied(mut e) => e.get_mut().push(Message::new(target, message, sender)),
                 Vacant(e) => { e.set(vec![Message::new(target, message, sender)]); },
             }
@@ -109,7 +111,7 @@ mod data {
         }
     }
 
-    #[deriving(Clone, Decodable, Encodable)]
+    #[deriving(Clone, RustcDecodable, RustcEncodable)]
     struct Message {
         target: String,
         sender: String,
@@ -120,9 +122,9 @@ mod data {
     impl Message {
         pub fn new(target: &str, message: &str, sender: &str) -> Message {
             Message {
-                target: target.into_string(),
-                sender: sender.into_string(),
-                message: message.into_string(),
+                target: target.to_owned(),
+                sender: sender.to_owned(),
+                message: message.to_owned(),
                 time: get_time(),
             }
         }
@@ -134,21 +136,21 @@ mod data {
             let ago = if dur.num_weeks() > 1 {
                 format!("{} weeks ago", dur.num_weeks())
             } else if dur.num_weeks() == 1 {
-                "A week ago".into_string()
+                "A week ago".to_owned()
             } else if dur.num_days() > 1 {
                 format!("{} days ago", dur.num_days())
             } else if dur.num_days() == 1 {
-                "A day ago".into_string()
+                "A day ago".to_owned()
             } else if dur.num_hours() > 1 {
                 format!("{} hours ago", dur.num_hours())
             } else if dur.num_hours() == 1 {
-                "An hour ago".into_string()
+                "An hour ago".to_owned()
             } else if dur.num_minutes() > 1 {
                 format!("{} minutes ago", dur.num_minutes())
             } else if dur.num_minutes() == 1 {
-                "A minute ago".into_string()
+                "A minute ago".to_owned()
             } else {
-                "Moments ago".into_string()  
+                "Moments ago".to_owned()  
             };
             format!("{}: {}, {} said {}{}", self.target, ago, self.sender, self.message,
                 if self.message.ends_with(".") || self.message.ends_with("!") || 

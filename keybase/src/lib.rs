@@ -29,15 +29,31 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
     let user = source.find('!').map_or("", |i| source[..i]);
     if let ("PRIVMSG", [chan, msg]) = (command, args) {
         let tokens: Vec<_> = msg.split_str(" ").collect();
-        if tokens[0] == "@keybase" && tokens.len() == 2 {
+        if tokens[0] == "@keybase" && (tokens.len() == 2 || tokens.len() == 3) 
+        && tokens[1].len() > 0 {
             let url = format!("https://keybase.io/_/api/1.0/user/lookup.json?usernames={}&fields={}", 
-                              tokens[1], "proofs_summary");
+                              tokens[1], "proofs_summary,public_keys");
             let mut client = Client::new();
             let res = client.get(Url::parse(url[]).unwrap()).send().unwrap().read_to_string().unwrap();
             let lookup = data::LookUp::decode(res[]);
             if let Ok(lookup) = lookup {
-                try!(server.send_privmsg(chan, format!("{}: Keybase: {} {}", user, tokens[1],
-                                                       lookup.display())[]));
+                if tokens.len() == 2 {
+                    try!(server.send_privmsg(chan, format!("{}: Keybase: {} {}", user, tokens[1],
+                                                           lookup.display())[]));
+                } else if tokens[2].len() > 0 {
+                    let value = lookup.display_type(tokens[2]);
+                    println!("{}", tokens[2]);
+                    try!(server.send_privmsg(chan, match value {
+                        Some(ref res) if tokens[2] == "dns" || tokens[2] == "generic_web_site" => {
+                            format!("{}: {} has the following domains: {}", user, tokens[1], res)
+                        },
+                        Some(ref res) if tokens[2] == "key" => {
+                            format!("{}: {}'s fingerprint is {}.", user, tokens[1], res)
+                        },
+                        Some(res) => format!("{}: {} is {} on {}.", user, tokens[1], res, tokens[2]),
+                        None => format!("{}: {} has no proof for {}.", user, tokens[1], tokens[2]),
+                    }[]));
+                }
             } else {
                 try!(server.send_privmsg(chan, format!("{}: Something went wrong!", user)[]));
             }
@@ -67,17 +83,53 @@ mod data {
         pub fn display(&self) -> String {
             self.them.as_ref().map(|v| v[0].display()).unwrap()
         }
+
+        pub fn display_type(&self, kind: &str) -> Option<String> {
+            self.them.as_ref().map(|v| v[0].display_type(kind)).unwrap()
+        }
     }
 
     #[deriving(Decodable, Show)]
     pub struct Keybase {
         id: String,
-        proofs_summary: ProofSummary
+        public_keys: PublicKeys,
+        proofs_summary: ProofSummary,
     }
 
     impl Keybase {
         pub fn display(&self) -> String {
             self.proofs_summary.display()
+        }
+
+        pub fn display_type(&self, kind: &str) -> Option<String> {
+            if kind == "key" {
+                Some(self.public_keys.display())
+            } else {
+                self.proofs_summary.display_type(kind)
+            }
+        }
+    }
+
+    #[deriving(Decodable, Show)]
+    pub struct PublicKeys {
+        primary: PublicKey
+    }
+
+    impl PublicKeys {
+        pub fn display(&self) -> String {
+            self.primary.display()
+        }
+    }
+
+    #[deriving(Decodable, Show)]
+    pub struct PublicKey {
+        key_fingerprint: String,
+    }
+
+    impl PublicKey {
+        pub fn display(&self) -> String {
+            let len = self.key_fingerprint.len() - 16;
+            self.key_fingerprint[len..].into_string()
         }
     }
 
@@ -93,9 +145,25 @@ mod data {
                 ret.push_str(proof.display()[]);
                 ret.push_str(" ");
             }
+            if self.all.len() == 0 { return String::new() }
             let len = ret.len() - 1;
             ret.truncate(len);
             ret
+        }
+
+        pub fn display_type(&self, kind: &str) -> Option<String> {
+            let mut ret = String::new();
+            for proof in self.all.iter().filter(|p| p.proof_type[] == kind) {
+                ret.push_str(proof.nametag[]);
+                ret.push_str(" ");
+            }
+            let len = ret.len() - 1;
+            if len > 0 {
+                ret.truncate(len);
+                Some(ret)   
+            } else {
+                None   
+            }
         }
     }
 

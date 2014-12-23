@@ -3,6 +3,7 @@ extern crate irc;
 extern crate regex;
 #[phase(plugin)] extern crate regex_macros;
 
+use std::borrow::ToOwned;
 use std::io::{Command, BufferedReader, BufferedWriter, IoResult};
 use irc::conn::NetStream;
 use irc::data::Message;
@@ -34,7 +35,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
                 let msg = match Command::new(tokens[1]).args(tokens[2..]).spawn() {
                     Ok(mut p) => if let Ok(vec) = p.stdout.as_mut().unwrap().read_to_end() {
                         let re = regex!(r"[\s]");
-                        re.replace_all(String::from_utf8_lossy(vec[]).into_string()[], " ").into_string()
+                        re.replace_all(String::from_utf8_lossy(vec[]).to_owned()[], " ").to_owned()
                     } else {
                         format!("Failed to execute command for an unknown reason.")
                     },
