@@ -57,6 +57,7 @@ mod test {
             MemReader::new(input.as_bytes().to_vec()), MemWriter::new()
         ));
         for message in server.iter() {
+            let message = message.unwrap();
             println!("{}", message);
             let mut args = Vec::new();
             let msg_args: Vec<_> = message.args.iter().map(|s| s[]).collect();
