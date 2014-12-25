@@ -63,6 +63,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
 }
 
 mod data {
+    use std::borrow::ToOwned;
     use std::io::{IoError, IoErrorKind, IoResult};
     use serialize::json::decode;
 
@@ -129,7 +130,7 @@ mod data {
     impl PublicKey {
         pub fn display(&self) -> String {
             let len = self.key_fingerprint.len() - 16;
-            self.key_fingerprint[len..].into_string()
+            self.key_fingerprint[len..].to_owned()
         }
     }
 
