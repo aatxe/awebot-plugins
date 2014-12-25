@@ -13,3 +13,4 @@ crate-type = ["dylib"]
 
 irc = "*"
 hyper = "*"
+rustc-serialize = "*"

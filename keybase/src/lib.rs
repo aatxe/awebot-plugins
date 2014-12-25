@@ -1,7 +1,7 @@
 #![feature(slicing_syntax)]
 extern crate irc;
 extern crate hyper;
-extern crate serialize;
+extern crate "rustc-serialize" as rustc_serialize;
 
 use std::io::{BufferedReader, BufferedWriter, IoResult};
 use hyper::Url;
@@ -65,9 +65,9 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
 mod data {
     use std::borrow::ToOwned;
     use std::io::{IoError, IoErrorKind, IoResult};
-    use serialize::json::decode;
+    use rustc_serialize::json::decode;
 
-    #[deriving(Decodable, Show)]
+    #[deriving(RustcDecodable, Show)]
     pub struct LookUp {
         them: Option<Vec<Keybase>>
     }
@@ -90,7 +90,7 @@ mod data {
         }
     }
 
-    #[deriving(Decodable, Show)]
+    #[deriving(RustcDecodable, Show)]
     pub struct Keybase {
         id: String,
         public_keys: PublicKeys,
@@ -111,7 +111,7 @@ mod data {
         }
     }
 
-    #[deriving(Decodable, Show)]
+    #[deriving(RustcDecodable, Show)]
     pub struct PublicKeys {
         primary: PublicKey
     }
@@ -122,7 +122,7 @@ mod data {
         }
     }
 
-    #[deriving(Decodable, Show)]
+    #[deriving(RustcDecodable, Show)]
     pub struct PublicKey {
         key_fingerprint: String,
     }
@@ -134,7 +134,7 @@ mod data {
         }
     }
 
-    #[deriving(Decodable, Show)]
+    #[deriving(RustcDecodable, Show)]
     pub struct ProofSummary {
         all: Vec<Proof>
     }
@@ -168,7 +168,7 @@ mod data {
         }
     }
 
-    #[deriving(Decodable, Show)]
+    #[deriving(RustcDecodable, Show)]
     pub struct Proof {
         proof_type: String,
         nametag: String,
