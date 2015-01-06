@@ -9,8 +9,10 @@ authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 name = "chatkov"
 crate-type = ["dylib"]
 
-[dependencies]
-
+[dependencies.irc]
 irc = "*"
+default-features = false
+
+[dependencies.markov]
 markov = "*"
 

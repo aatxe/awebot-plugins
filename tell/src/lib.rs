@@ -1,4 +1,4 @@
-#![feature(slicing_syntax)]
+#![feature(slicing_syntax, old_orphan_check)]
 extern crate irc;
 extern crate "rustc-serialize" as rustc_serialize;
 extern crate time;
@@ -62,7 +62,7 @@ mod data {
     use rustc_serialize::json::{decode, encode};
     use time::{Timespec, get_time};
 
-    #[deriving(RustcEncodable, RustcDecodable)]
+    #[derive(RustcEncodable, RustcDecodable)]
     pub struct Messages {
         undelivered: HashMap<String, Vec<Message>>
     }
@@ -95,9 +95,9 @@ mod data {
         }
 
         pub fn add_message(&mut self, target: &str, message: &str, sender: &str) {
-            match self.undelivered.entry(target.to_owned()) {
+            match self.undelivered.entry(&target.to_owned()) {
                 Occupied(mut e) => e.get_mut().push(Message::new(target, message, sender)),
-                Vacant(e) => { e.set(vec![Message::new(target, message, sender)]); },
+                Vacant(e) => { e.insert(vec![Message::new(target, message, sender)]); },
             }
         }
 
@@ -111,7 +111,7 @@ mod data {
         }
     }
 
-    #[deriving(Clone, RustcDecodable, RustcEncodable)]
+    #[derive(Clone, RustcDecodable, RustcEncodable)]
     struct Message {
         target: String,
         sender: String,

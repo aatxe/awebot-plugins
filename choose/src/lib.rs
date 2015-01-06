@@ -2,7 +2,7 @@
 extern crate irc;
 
 use std::io::{BufferedReader, BufferedWriter, IoResult};
-use std::rand::{task_rng, sample};
+use std::rand::{thread_rng, sample};
 use irc::conn::NetStream;
 use irc::data::Message;
 use irc::data::kinds::{IrcReader, IrcWriter};
@@ -26,7 +26,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
     let user = source.find('!').map_or("", |i| source[..i]);
     if let ("PRIVMSG", [chan, msg]) = (command, args) {
         if msg.starts_with("@choose ") {            
-            let res = sample(&mut task_rng(), msg[8..].split_str(" or "), 1);
+            let res = sample(&mut thread_rng(), msg[8..].split_str(" or "), 1);
             try!(server.send_privmsg(chan, format!("{}: {}", user, res[0])[]));
         }
     }

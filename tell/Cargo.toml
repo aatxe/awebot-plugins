@@ -9,8 +9,13 @@ authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 name = "tell"
 crate-type = ["dylib"]
 
-[dependencies]
-
+[dependencies.irc]
 irc = "*"
+default-features = false
+
+[dependencies.rustc-serialize]
 rustc-serialize = "*"
+
+[dependencies.time]
 time = "*"
+features = ["rustc-serialize"]
