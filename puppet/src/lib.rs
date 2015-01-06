@@ -41,6 +41,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
 
 #[cfg(test)]
 mod test {
+    use std::borrow::ToOwned;
     use std::default::Default;
     use std::io::{MemReader, MemWriter};
     use irc::conn::Connection;
@@ -50,8 +51,8 @@ mod test {
 
     fn test_helper(input: &str) -> String {
         let server = IrcServer::from_connection(Config {
-            owners: Some(vec!["test".into_string()]),
-            nickname: Some("test".into_string()),
+            owners: Some(vec!["test".to_owned()]),
+            nickname: Some("test".to_owned()),
             ..Default::default()
         }, Connection::new(
             MemReader::new(input.as_bytes().to_vec()), MemWriter::new()
