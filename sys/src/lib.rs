@@ -1,7 +1,7 @@
-#![feature(phase, slicing_syntax)]
+#![feature(plugin, slicing_syntax)]
 extern crate irc;
 extern crate regex;
-#[phase(plugin)] extern crate regex_macros;
+#[plugin] extern crate regex_macros;
 
 use std::borrow::ToOwned;
 use std::io::{Command, BufferedReader, BufferedWriter, IoResult};
