@@ -10,18 +10,11 @@ use irc::server::utils::Wrapper;
 #[no_mangle]
 pub fn process<'a>(server: &'a Wrapper<'a, BufferedReader<NetStream>, BufferedWriter<NetStream>>, 
                    message: Message) -> IoResult<()> {
-    let mut args = Vec::new();
-    let msg_args: Vec<_> = message.args.iter().map(|s| s[]).collect();
-    args.push_all(msg_args[]);
-    if let Some(ref suffix) = message.suffix {
-        args.push(suffix[])
-    }
-    let source = message.prefix.unwrap_or(String::new());
-    process_internal(server, source[], message.command[], args[])
+    process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, command: &str,
-                               args: &[&str]) -> IoResult<()> where T: IrcReader, U: IrcWriter {
+pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) -> IoResult<()> 
+    where T: IrcReader, U: IrcWriter {
     // TODO: plugin functionality
     Ok(())
 }
@@ -40,17 +33,8 @@ mod test {
         ));
         for message in server.iter() {
             let message = message.unwrap();
-            println!("{}", message);
-            let mut args = Vec::new();
-            let msg_args: Vec<_> = message.args.iter().map(|s| s[]).collect();
-            args.push_all(msg_args[]);
-            if let Some(ref suffix) = message.suffix {
-                args.push(suffix[])
-            }
-            let source = message.prefix.unwrap_or(String::new());
-            super::process_internal(
-                &Wrapper::new(&server), source[], message.command[], args[]
-            ).unwrap();
+            println!("{:?}", message);
+            super::process_internal(&Wrapper::new(&server), &message).unwrap();
         }
         String::from_utf8(server.conn().writer().get_ref().to_vec()).unwrap()
     }

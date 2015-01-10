@@ -7,21 +7,56 @@ use std::io::{BufferedReader, BufferedWriter, IoResult};
 use hyper::Url;
 use hyper::client::Client;
 use irc::conn::NetStream;
-use irc::data::Message;
+use irc::data::{Command, Message};
+use irc::data::Command::PRIVMSG;
 use irc::data::kinds::{IrcReader, IrcWriter};
 use irc::server::utils::Wrapper;
 
 #[no_mangle]
 pub fn process<'a>(server: &'a Wrapper<'a, BufferedReader<NetStream>, BufferedWriter<NetStream>>, 
                    message: Message) -> IoResult<()> {
-    let mut args = Vec::new();
-    let msg_args: Vec<_> = message.args.iter().map(|s| s[]).collect();
-    args.push_all(msg_args[]);
-    if let Some(ref suffix) = message.suffix {
-        args.push(suffix[])
+    process_internal(server, &message)
+}
+
+pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) -> IoResult<()> 
+    where T: IrcReader, U: IrcWriter {
+    let user = msg.get_source_nickname().unwrap_or("");
+    if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
+        let tokens: Vec<_> = msg.split_str(" ").collect();
+        if tokens[0] == "@keybase" && (tokens.len() == 2 || tokens.len() == 3) 
+        && tokens[1].len() > 0 {
+            let url = format!("https://keybase.io/_/api/1.0/user/lookup.json?usernames={}&fields={\
+                              }", tokens[1], "proofs_summary,public_keys");
+            let mut client = Client::new();
+            let res = client.get(Url::parse(&url[]).unwrap()).send().unwrap()
+                            .read_to_string().unwrap();
+            let lookup = data::LookUp::decode(&res[]);
+            if let Ok(lookup) = lookup {
+                if tokens.len() == 2 {
+                    try!(server.send_privmsg(chan, format!("{}: Keybase: {} {}", user, tokens[1],
+                                                           lookup.display())[]));
+                } else if tokens[2].len() > 0 {
+                    let value = lookup.display_type(tokens[2]);
+                    println!("{}", tokens[2]);
+                    try!(server.send_privmsg(chan, &match value {
+                        Some(ref res) if tokens[2] == "dns" || tokens[2] == "generic_web_site" => {
+                            format!("{}: {} has the following domains: {}", user, tokens[1], res)
+                        },
+                        Some(ref res) if tokens[2] == "key" => {
+                            format!("{}: {}'s fingerprint is {}.", user, tokens[1], res)
+                        },
+                        Some(res) => {
+                            format!("{}: {} is {} on {}.", user, tokens[1], res, tokens[2])
+                        },
+                        None => format!("{}: {} has no proof for {}.", user, tokens[1], tokens[2]),
+                    }[]));
+                }
+            } else {
+                try!(server.send_privmsg(chan, format!("{}: Something went wrong!", user)[]));
+            }
+        }  
     }
-    let source = message.prefix.unwrap_or(String::new());
-    process_internal(server, source[], message.command[], args[])
+    Ok(())
 }
 
 pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, command: &str,
@@ -204,17 +239,8 @@ mod test {
         ));
         for message in server.iter() {
             let message = message.unwrap();
-            println!("{}", message);
-            let mut args = Vec::new();
-            let msg_args: Vec<_> = message.args.iter().map(|s| s[]).collect();
-            args.push_all(msg_args[]);
-            if let Some(ref suffix) = message.suffix {
-                args.push(suffix[])
-            }
-            let source = message.prefix.unwrap_or(String::new());
-            super::process_internal(
-                &Wrapper::new(&server), source[], message.command[], args[]
-            ).unwrap();
+            println!("{:?}", message);
+            super::process_internal(&Wrapper::new(&server), &message).unwrap();
         }
         String::from_utf8(server.conn().writer().get_ref().to_vec()).unwrap()
     }

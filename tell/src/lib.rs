@@ -1,4 +1,5 @@
-#![feature(slicing_syntax, old_orphan_check)]
+#![allow(unstable)]
+#![feature(slicing_syntax)]
 extern crate irc;
 extern crate "rustc-serialize" as rustc_serialize;
 extern crate time;
@@ -6,7 +7,8 @@ extern crate time;
 
 use std::io::{BufferedReader, BufferedWriter, IoResult};
 use irc::conn::NetStream;
-use irc::data::Message;
+use irc::data::{Command, Message};
+use irc::data::Command::PRIVMSG;
 use irc::data::kinds::{IrcReader, IrcWriter};
 use irc::server::Server;
 use irc::server::utils::Wrapper;
@@ -14,20 +16,13 @@ use irc::server::utils::Wrapper;
 #[no_mangle]
 pub fn process<'a>(server: &'a Wrapper<'a, BufferedReader<NetStream>, BufferedWriter<NetStream>>, 
                    message: Message) -> IoResult<()> {
-    let mut args = Vec::new();
-    let msg_args: Vec<_> = message.args.iter().map(|s| s[]).collect();
-    args.push_all(msg_args[]);
-    if let Some(ref suffix) = message.suffix {
-        args.push(suffix[])
-    }
-    let source = message.prefix.unwrap_or(String::new());
-    process_internal(server, source[], message.command[], args[])
+    process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, command: &str, 
-                                  args: &[&str]) -> IoResult<()> where T: IrcReader, U: IrcWriter {
-    let user = source.find('!').map_or("", |i| source[..i]);
-    if let ("PRIVMSG", [chan, msg]) = (command, args) {
+pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) -> IoResult<()> 
+    where T: IrcReader, U: IrcWriter {
+    let user = msg.get_source_nickname().unwrap_or("");
+    if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
         let resp = if chan == server.config().nickname() {
             user
         } else {
@@ -37,16 +32,16 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, c
         let tokens: Vec<_> = msg.split_str(" ").collect();
         if tokens[0] == "@tell" && tokens.len() > 1 && tokens[1] != server.config().nickname()
         && msg.len() > 7 + tokens[1].len() {
-            let message = msg[7+tokens[1].len()..];
+            let message = &msg[7+tokens[1].len()..];
             messages.add_message(tokens[1], message, user);
             let _ = messages.save();
-            try!(server.send_privmsg(resp, format!("{}: I'll let them know!", user)[]));
+            try!(server.send_privmsg(resp, &format!("{}: I'll let them know!", user)[]));
         } else if tokens[0] == "@tell" && tokens.len() > 1 
                && tokens[1] == server.config().nickname() {
-            try!(server.send_privmsg(resp, format!("{}: I'm right here!", user)[]));
+            try!(server.send_privmsg(resp, &format!("{}: I'm right here!", user)[]));
         }
         for msg in messages.get_messages(user).iter() {
-            try!(server.send_privmsg(resp, msg.to_string()[]));
+            try!(server.send_privmsg(resp, &msg.to_string()[]));
         }
     }
     Ok(())
@@ -56,6 +51,7 @@ mod data {
     use std::borrow::ToOwned;
     use std::collections::HashMap;
     use std::collections::hash_map::Entry::{Occupied, Vacant};
+    use std::error::Error;
     use std::string::ToString;
     use std::io::{File, FilePermission, InvalidInput, IoError, IoResult};
     use std::io::fs::mkdir_recursive;
@@ -72,30 +68,28 @@ mod data {
             if let Ok(messages) = Messages::load_internal() {
                 messages
             } else {
-                Messages {
-                    undelivered: HashMap::new()
-                }
+                Messages { undelivered: HashMap::new() }
             }
         }
 
         fn load_internal() -> IoResult<Messages> {
             let mut file = try!(File::open(&Path::new("data/messages.json")));
             let data = try!(file.read_to_string());
-            decode(data[]).map_err(|e| IoError {
+            decode(&data[]).map_err(|e| IoError {
                 kind: InvalidInput,
                 desc: "Decoder error",
-                detail: Some(e.to_string()),
+                detail: e.detail(),
             })
         }
 
         pub fn save(&self) -> IoResult<()> {
             try!(mkdir_recursive(&Path::new("data/"), FilePermission::all()));
             let mut f = File::create(&Path::new("data/messages.json"));
-            f.write_str(encode(self)[])
+            f.write_str(&encode(self)[])
         }
 
         pub fn add_message(&mut self, target: &str, message: &str, sender: &str) {
-            match self.undelivered.entry(&target.to_owned()) {
+            match self.undelivered.entry(target.to_owned()) {
                 Occupied(mut e) => e.get_mut().push(Message::new(target, message, sender)),
                 Vacant(e) => { e.insert(vec![Message::new(target, message, sender)]); },
             }
@@ -174,16 +168,7 @@ mod test {
         for message in server.iter() {
             let message = message.unwrap();
             println!("{}", message);
-            let mut args = Vec::new();
-            let msg_args: Vec<_> = message.args.iter().map(|s| s[]).collect();
-            args.push_all(msg_args[]);
-            if let Some(ref suffix) = message.suffix {
-                args.push(suffix[])
-            }
-            let source = message.prefix.unwrap_or(String::new());
-            super::process_internal(
-                &Wrapper::new(&server), source[], message.command[], args[]
-            ).unwrap();
+            super::process_internal(&Wrapper::new(&server), &message).unwrap();
         }
         String::from_utf8(server.conn().writer().get_ref().to_vec()).unwrap()
     }
