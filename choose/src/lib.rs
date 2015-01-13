@@ -51,16 +51,15 @@ mod test {
     #[test]
     fn choose_from_two() {
         let data = test_helper(":test!test@test PRIVMSG #test :@choose this or that\r\n");
-        assert!(data[] == "PRIVMSG #test :test: this\r\n" || 
-                data[] == "PRIVMSG #test :test: that\r\n")    
+        assert!(["PRIVMSG #test :test: this\r\n", "PRIVMSG #test :test: that\r\n"]
+                .contains(&&data[]));    
     }
 
     #[test]
     fn choose_from_three() {
         let data = test_helper(":test!test@test PRIVMSG #test :@choose this or that or the other \
                                 thing\r\n");
-        assert!(data[] == "PRIVMSG #test :test: this\r\n" || 
-                data[] == "PRIVMSG #test :test: that\r\n" ||
-                data[] == "PRIVMSG #test :test: the other thing\r\n")    
+        assert!(["PRIVMSG #test :test: this\r\n", "PRIVMSG #test :test: that\r\n", 
+                "PRIVMSG #test :test: the other thing\r\n"].contains(&&data[]));
     }
 }
