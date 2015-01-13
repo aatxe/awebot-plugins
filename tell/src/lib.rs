@@ -167,7 +167,7 @@ mod test {
         ));
         for message in server.iter() {
             let message = message.unwrap();
-            println!("{}", message);
+            println!("{:?}", message);
             super::process_internal(&Wrapper::new(&server), &message).unwrap();
         }
         String::from_utf8(server.conn().writer().get_ref().to_vec()).unwrap()
