@@ -1,9 +1,15 @@
 language: rust
 script:
-  - cd choose
+  - cd chatkov
+  - cargo build --verbose
+  - cargo test --verbose
+  - cd ../choose
   - cargo build --verbose
   - cargo test --verbose
   - cd ../ddg
+  - cargo build --verbose
+  - cargo test --verbose
+  - cd ../flood
   - cargo build --verbose
   - cargo test --verbose
   - cd ../presence
@@ -12,7 +18,13 @@ script:
   - cd ../puppet
   - cargo build --verbose
   - cargo test --verbose
+  - cd ../reclaim
+  - cargo build --verbose
+  - cargo test --verbose
   - cd ../sys
+  - cargo build --verbose
+  - cargo test --verbose
+  - cd ../tell
   - cargo build --verbose
   - cargo test --verbose
   - cd ../users
@@ -28,3 +40,4 @@ notifications:
     template:
       - "%{repository_slug}/%{branch} (%{commit} - %{author}): %{message}"
     skip_join: true
+
