@@ -39,10 +39,10 @@ mod test {
     use std::borrow::ToOwned;
     use std::default::Default;
     use std::io::{MemReader, MemWriter};
-    use irc::conn::Connection;
-    use irc::data::Config;
-    use irc::server::{IrcServer, Server};
-    use irc::server::utils::Wrapper;
+    use irc::client::conn::Connection;
+    use irc::client::data::Config;
+    use irc::client::server::{IrcServer, Server};
+    use irc::client::server::utils::Wrapper;
 
     fn test_helper(input: &str) -> String {
         let server = IrcServer::from_connection(Config {

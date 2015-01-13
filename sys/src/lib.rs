@@ -53,9 +53,9 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
 mod test {
     use std::default::Default;
     use std::io::{MemReader, MemWriter};
-    use irc::conn::Connection;
-    use irc::server::{IrcServer, Server};
-    use irc::server::utils::Wrapper;
+    use irc::client::conn::Connection;
+    use irc::client::server::{IrcServer, Server};
+    use irc::client::server::utils::Wrapper;
 
     fn test_helper(input: &str) -> String {
         let server = IrcServer::from_connection(Default::default(), Connection::new(
