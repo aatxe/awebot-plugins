@@ -1,3 +1,4 @@
+#![allow(unstable)]
 #![feature(slicing_syntax)]
 extern crate irc;
 extern crate hyper;
@@ -33,8 +34,8 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
             let lookup = data::LookUp::decode(&res[]);
             if let Ok(lookup) = lookup {
                 if tokens.len() == 2 {
-                    try!(server.send_privmsg(chan, format!("{}: Keybase: {} {}", user, tokens[1],
-                                                           lookup.display())[]));
+                    try!(server.send_privmsg(chan, &format!("{}: Keybase: {} {}", user, tokens[1],
+                                                            lookup.display())[]));
                 } else if tokens[2].len() > 0 {
                     let value = lookup.display_type(tokens[2]);
                     println!("{}", tokens[2]);
@@ -52,57 +53,20 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
                     }[]));
                 }
             } else {
-                try!(server.send_privmsg(chan, format!("{}: Something went wrong!", user)[]));
+                try!(server.send_privmsg(chan, &format!("{}: Something went wrong!", user)[]));
             }
         }  
     }
     Ok(())
 }
 
-pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, source: &str, command: &str,
-                               args: &[&str]) -> IoResult<()> where T: IrcReader, U: IrcWriter {
-    let user = source.find('!').map_or("", |i| source[..i]);
-    if let ("PRIVMSG", [chan, msg]) = (command, args) {
-        let tokens: Vec<_> = msg.split_str(" ").collect();
-        if tokens[0] == "@keybase" && (tokens.len() == 2 || tokens.len() == 3) 
-        && tokens[1].len() > 0 {
-            let url = format!("https://keybase.io/_/api/1.0/user/lookup.json?usernames={}&fields={}", 
-                              tokens[1], "proofs_summary,public_keys");
-            let mut client = Client::new();
-            let res = client.get(Url::parse(url[]).unwrap()).send().unwrap().read_to_string().unwrap();
-            let lookup = data::LookUp::decode(res[]);
-            if let Ok(lookup) = lookup {
-                if tokens.len() == 2 {
-                    try!(server.send_privmsg(chan, format!("{}: Keybase: {} {}", user, tokens[1],
-                                                           lookup.display())[]));
-                } else if tokens[2].len() > 0 {
-                    let value = lookup.display_type(tokens[2]);
-                    println!("{}", tokens[2]);
-                    try!(server.send_privmsg(chan, match value {
-                        Some(ref res) if tokens[2] == "dns" || tokens[2] == "generic_web_site" => {
-                            format!("{}: {} has the following domains: {}", user, tokens[1], res)
-                        },
-                        Some(ref res) if tokens[2] == "key" => {
-                            format!("{}: {}'s fingerprint is {}.", user, tokens[1], res)
-                        },
-                        Some(res) => format!("{}: {} is {} on {}.", user, tokens[1], res, tokens[2]),
-                        None => format!("{}: {} has no proof for {}.", user, tokens[1], tokens[2]),
-                    }[]));
-                }
-            } else {
-                try!(server.send_privmsg(chan, format!("{}: Something went wrong!", user)[]));
-            }
-        }
-    }
-    Ok(())
-}
-
 mod data {
     use std::borrow::ToOwned;
+    use std::error::Error;
     use std::io::{IoError, IoErrorKind, IoResult};
     use rustc_serialize::json::decode;
 
-    #[deriving(RustcDecodable, Show)]
+    #[derive(RustcDecodable, Show)]
     pub struct LookUp {
         them: Option<Vec<Keybase>>
     }
@@ -112,7 +76,7 @@ mod data {
             decode(string).map_err(|e| IoError {
                 kind: IoErrorKind::InvalidInput,
                 desc: "Failed to decode configuration file.",
-                detail: Some(e.to_string()),
+                detail: e.detail(),
             })
         }
 
@@ -125,7 +89,7 @@ mod data {
         }
     }
 
-    #[deriving(RustcDecodable, Show)]
+    #[derive(RustcDecodable, Show)]
     pub struct Keybase {
         id: String,
         public_keys: PublicKeys,
@@ -146,7 +110,7 @@ mod data {
         }
     }
 
-    #[deriving(RustcDecodable, Show)]
+    #[derive(RustcDecodable, Show)]
     pub struct PublicKeys {
         primary: PublicKey
     }
@@ -157,7 +121,7 @@ mod data {
         }
     }
 
-    #[deriving(RustcDecodable, Show)]
+    #[derive(RustcDecodable, Show)]
     pub struct PublicKey {
         key_fingerprint: String,
     }
@@ -169,7 +133,7 @@ mod data {
         }
     }
 
-    #[deriving(RustcDecodable, Show)]
+    #[derive(RustcDecodable, Show)]
     pub struct ProofSummary {
         all: Vec<Proof>
     }
@@ -178,7 +142,7 @@ mod data {
         pub fn display(&self) -> String {
             let mut ret = String::new();
             for proof in self.all.iter() {
-                ret.push_str(proof.display()[]);
+                ret.push_str(&proof.display()[]);
                 ret.push_str(" ");
             }
             if self.all.len() == 0 { return String::new() }
@@ -189,8 +153,8 @@ mod data {
 
         pub fn display_type(&self, kind: &str) -> Option<String> {
             let mut ret = String::new();
-            for proof in self.all.iter().filter(|p| p.proof_type[] == kind) {
-                ret.push_str(proof.nametag[]);
+            for proof in self.all.iter().filter(|p| &p.proof_type[] == kind) {
+                ret.push_str(&proof.nametag[]);
                 ret.push_str(" ");
             }
             let len = ret.len() - 1;
@@ -203,7 +167,7 @@ mod data {
         }
     }
 
-    #[deriving(RustcDecodable, Show)]
+    #[derive(RustcDecodable, Show)]
     pub struct Proof {
         proof_type: String,
         nametag: String,
@@ -211,7 +175,7 @@ mod data {
 
     impl Proof {
         pub fn display(&self) -> String {
-            format!("{}: {}", match self.proof_type[] {
+            format!("{}: {}", match &self.proof_type[] {
                 "twitter"          => "Twitter",
                 "github"           => "GitHub",
                 "reddit"           => "Reddit",
@@ -219,7 +183,7 @@ mod data {
                 "coinbase"         => "Coinbase",
                 "dns"              => "Website",
                 "generic_web_site" => "Website",
-                _                  => self.proof_type[]
+                _                  => &self.proof_type[]
             }, self.nametag)
         }
     }
