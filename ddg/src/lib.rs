@@ -4,11 +4,11 @@ extern crate irc;
 extern crate url;
 
 use std::io::{BufferedReader, BufferedWriter, IoResult};
-use irc::conn::NetStream;
-use irc::data::{Command, Message};
-use irc::data::Command::PRIVMSG;
-use irc::data::kinds::{IrcReader, IrcWriter};
-use irc::server::utils::Wrapper;
+use irc::client::conn::NetStream;
+use irc::client::data::{Command, Message};
+use irc::client::data::Command::PRIVMSG;
+use irc::client::data::kinds::{IrcReader, IrcWriter};
+use irc::client::server::utils::Wrapper;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 #[no_mangle]

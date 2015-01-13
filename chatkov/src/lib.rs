@@ -5,11 +5,11 @@ extern crate markov;
 
 use std::io::{BufferedReader, BufferedWriter, FileAccess, FileMode, IoResult};
 use std::io::fs::File;
-use irc::conn::NetStream;
-use irc::data::{Command, Message};
-use irc::data::Command::PRIVMSG;
-use irc::data::kinds::{IrcReader, IrcWriter};
-use irc::server::utils::Wrapper;
+use irc::client::conn::NetStream;
+use irc::client::data::{Command, Message};
+use irc::client::data::Command::PRIVMSG;
+use irc::client::data::kinds::{IrcReader, IrcWriter};
+use irc::client::server::utils::Wrapper;
 use markov::Chain;
 
 #[no_mangle]

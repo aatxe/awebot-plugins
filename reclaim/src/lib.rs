@@ -3,10 +3,10 @@
 extern crate irc;
 
 use std::io::{BufferedReader, BufferedWriter, IoResult};
-use irc::conn::NetStream;
-use irc::data::{Message, Response};
-use irc::server::Server;
-use irc::server::utils::Wrapper;
+use irc::client::conn::NetStream;
+use irc::client::data::{Message, Response};
+use irc::client::server::Server;
+use irc::client::server::utils::Wrapper;
 
 static mut count: usize =  0;
 static mut flag: bool = false;

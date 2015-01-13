@@ -2,10 +2,10 @@
 extern crate irc;
 
 use std::io::{BufferedReader, BufferedWriter, IoResult};
-use irc::conn::NetStream;
-use irc::data::Message;
-use irc::data::kinds::{IrcReader, IrcWriter};
-use irc::server::utils::Wrapper;
+use irc::client::conn::NetStream;
+use irc::client::data::Message;
+use irc::client::data::kinds::{IrcReader, IrcWriter};
+use irc::client::server::utils::Wrapper;
 
 #[no_mangle]
 pub fn process<'a>(server: &'a Wrapper<'a, BufferedReader<NetStream>, BufferedWriter<NetStream>>, 

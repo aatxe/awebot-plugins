@@ -7,11 +7,11 @@ extern crate "rustc-serialize" as rustc_serialize;
 use std::io::{BufferedReader, BufferedWriter, IoResult};
 use hyper::Url;
 use hyper::client::Client;
-use irc::conn::NetStream;
-use irc::data::{Command, Message};
-use irc::data::Command::PRIVMSG;
-use irc::data::kinds::{IrcReader, IrcWriter};
-use irc::server::utils::Wrapper;
+use irc::client::conn::NetStream;
+use irc::client::data::{Command, Message};
+use irc::client::data::Command::PRIVMSG;
+use irc::client::data::kinds::{IrcReader, IrcWriter};
+use irc::client::server::utils::Wrapper;
 
 #[no_mangle]
 pub fn process<'a>(server: &'a Wrapper<'a, BufferedReader<NetStream>, BufferedWriter<NetStream>>, 
