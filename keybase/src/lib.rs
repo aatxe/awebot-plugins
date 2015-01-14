@@ -209,5 +209,30 @@ mod test {
         String::from_utf8(server.conn().writer().get_ref().to_vec()).unwrap()
     }
     
-    // TODO: add tests
+    #[test]
+    fn keybase_lookup() {
+        let data = test_helper(":test!test@test PRIVMSG #test :@keybase awe\r\n");
+        assert_eq!(&data[], "PRIVMSG #test :test: Keybase: awe Twitter: aatxe GitHub: aatxe \
+                            Reddit: aaronweiss74 Coinbase: coinbase/awe Website: deviant-core.net \
+                            Website: pdgn.co Website: aaronweiss.us\r\n"); 
+    }
+
+    #[test]
+    fn keybase_lookup_key() {
+        let data = test_helper(":test!test@test PRIVMSG #test :@keybase awe key\r\n");
+        assert_eq!(&data[], "PRIVMSG #test :test: awe's fingerprint is a943ba9f204c61be.\r\n");
+    }
+
+    #[test]
+    fn keybase_lookup_dns() {
+        let data = test_helper(":test!test@test PRIVMSG #test :@keybase awe dns\r\n");
+        assert_eq!(&data[], "PRIVMSG #test :test: awe has the following domains: deviant-core.net \
+                            pdgn.co aaronweiss.us\r\n");
+    }
+
+    #[test]
+    fn keybase_lookup_github() {
+        let data = test_helper(":test!test@test PRIVMSG #test :@keybase awe github\r\n");
+        assert_eq!(&data[], "PRIVMSG #test :test: awe is aatxe on github.\r\n");
+    }
 }
