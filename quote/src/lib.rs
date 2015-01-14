@@ -37,7 +37,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
         } else if tokens[0] == "@quote" {
             let quotes = data::Quotes::load();
             let quote = if tokens.len() > 1 {
-                tokens[1].parse().map(|i| quotes.get_quote(i))
+                tokens[1].parse().and_then(|i| quotes.get_quote(i))
             } else {
                 quotes.get_random_quote()
             };
@@ -99,8 +99,8 @@ mod data {
             self.quotes.push(Quote::new(message, sender));
         }
 
-        pub fn get_quote(&self, index: usize) -> &Quote {
-            &self.quotes[index - 1]
+        pub fn get_quote(&self, index: usize) -> Option<&Quote> {
+            self.quotes.get(index - 1)
         }
 
         pub fn get_random_quote(&self) -> Option<&Quote> {
