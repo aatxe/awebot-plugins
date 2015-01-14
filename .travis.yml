@@ -12,6 +12,9 @@ script:
   - cd ../flood
   - cargo build --verbose
   - cargo test --verbose
+  - cd ../keybase
+  - cargo build --verbose
+  - cargo test --verbose
   - cd ../lewd
   - cargo build --verbose
   - cargo test --verbose
@@ -19,6 +22,9 @@ script:
   - cargo build --verbose
   - cargo test --verbose
   - cd ../puppet
+  - cargo build --verbose
+  - cargo test --verbose
+  - cd ../quote
   - cargo build --verbose
   - cargo test --verbose
   - cd ../reclaim
