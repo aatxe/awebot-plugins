@@ -42,10 +42,8 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
                 quotes.get_random_quote()
             };
             match quote {
-                Some(q) => {
-                    try!(server.send_privmsg(resp, &format!("{}: {} once said {}", user, q.sender,
-                                                            q.message)[]));
-                },
+                Some(q) => 
+                    try!(server.send_privmsg(resp, &format!("<{}> {}", q.sender, q.message)[])),
                 None => try!(server.send_privmsg(resp, if tokens.len() > 1 {
                     "There is no such quote."
                 } else {
