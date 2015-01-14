@@ -30,6 +30,9 @@ script:
   - cd ../users
   - cargo build --verbose
   - cargo test --verbose
+  - cd ../whois
+  - cargo build --verbose
+  - cargo test --verbose
   - cd ..
 notifications:
   email:
