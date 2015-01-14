@@ -12,6 +12,9 @@ script:
   - cd ../flood
   - cargo build --verbose
   - cargo test --verbose
+  - cd ../lewd
+  - cargo build --verbose
+  - cargo test --verbose
   - cd ../presence
   - cargo build --verbose
   - cargo test --verbose
