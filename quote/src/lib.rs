@@ -1,3 +1,4 @@
+#![allow(unstable)]
 #![feature(slicing_syntax)]
 extern crate irc;
 extern crate "rustc-serialize" as rustc_serialize;
@@ -31,16 +32,25 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
             let quote = &msg[11+tokens[1].len()..];
             quotes.add_quote(quote, tokens[1]);
             let _ = quotes.save();
-            try!(server.send_privmsg(resp, &format!("{}: I'll remember it.", user)[]));
+            try!(server.send_privmsg(resp, &format!("{}: I'll remember it as #{}.", user, 
+                                                    quotes.get_latest_index())[]));
         } else if tokens[0] == "@quote" {
-            let mut quotes = data::Quotes::load();
-            let quote = quotes.get_random_quote();
+            let quotes = data::Quotes::load();
+            let quote = if tokens.len() > 1 {
+                tokens[1].parse().map(|i| quotes.get_quote(i))
+            } else {
+                quotes.get_random_quote()
+            };
             match quote {
                 Some(q) => {
                     try!(server.send_privmsg(resp, &format!("{}: {} once said {}", user, q.sender,
                                                             q.message)[]));
                 },
-                None => try!(server.send_privmsg(resp, "I don't know any quotes.")),
+                None => try!(server.send_privmsg(resp, if tokens.len() > 1 {
+                    "There is no such quote."
+                } else {
+                    "I don't know any quotes."
+                })),
             }
         }
     }
@@ -49,11 +59,8 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
 
 mod data {
     use std::borrow::ToOwned;
-    use std::collections::HashMap;
-    use std::collections::hash_map::Entry::{Occupied, Vacant};
     use std::error::Error;
     use std::rand::{Rng, thread_rng}; 
-    use std::string::ToString;
     use std::io::{File, FilePermission, InvalidInput, IoError, IoResult};
     use std::io::fs::mkdir_recursive;
     use rustc_serialize::json::{decode, encode};
@@ -92,8 +99,16 @@ mod data {
             self.quotes.push(Quote::new(message, sender));
         }
 
+        pub fn get_quote(&self, index: usize) -> &Quote {
+            &self.quotes[index - 1]
+        }
+
         pub fn get_random_quote(&self) -> Option<&Quote> {
             thread_rng().choose(&self.quotes[])
+        }
+
+        pub fn get_latest_index(&self) -> usize {
+            self.quotes.len()
         }
     }
 
