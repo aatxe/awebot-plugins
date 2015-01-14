@@ -39,7 +39,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
     let user = msg.get_source_nickname().unwrap_or("");
     if let Ok(PRIVMSG(_, _)) = Command::from_message(msg) {
         let mut rng = thread_rng();
-        if rng.gen_weighted_bool(20) {
+        if rng.gen_weighted_bool(1000) {
             try!(server.send_privmsg(user, *rng.choose(MESSAGES).unwrap()));
         }
     }
