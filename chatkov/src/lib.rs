@@ -64,6 +64,10 @@ mod test {
         }
         String::from_utf8(server.conn().writer().get_ref().to_vec()).unwrap()
     }
-    
-    // TODO: add tests
+
+    #[test]
+    fn chatkov() {
+        let data = test_helper(":test!test@test PRIVMSG #test :@markov\r\n"); 
+        assert!(data.len() > 0)
+    }
 }
