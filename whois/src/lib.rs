@@ -71,8 +71,8 @@ mod data {
             let data = try!(file.read_to_string());
             decode(&data[]).map_err(|e| IoError {
                 kind: InvalidInput,
-                desc: "Decoder error",
-                detail: e.detail(),
+                desc: "Failed to decode whois data.",
+                detail: Some(e.description().to_owned()),
             })
         }
 
@@ -82,7 +82,11 @@ mod data {
             path.push_str(&self.nickname[]);
             path.push_str(".json");
             let mut f = File::create(&Path::new(&path[]));
-            f.write_str(&encode(self)[])
+            f.write_str(&try!(encode(self).map_err(|e| IoError {
+                kind: InvalidInput,
+                desc: "Failed to encode whois data.",
+                detail: Some(e.description().to_owned()),
+            }))[])
         }
     }
 }

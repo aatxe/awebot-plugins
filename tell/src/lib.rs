@@ -77,15 +77,19 @@ mod data {
             let data = try!(file.read_to_string());
             decode(&data[]).map_err(|e| IoError {
                 kind: InvalidInput,
-                desc: "Decoder error",
-                detail: e.detail(),
+                desc: "Failed to decode messages.",
+                detail: Some(e.description().to_owned()),
             })
         }
 
         pub fn save(&self) -> IoResult<()> {
             try!(mkdir_recursive(&Path::new("data/"), FilePermission::all()));
             let mut f = File::create(&Path::new("data/messages.json"));
-            f.write_str(&encode(self)[])
+            f.write_str(&try!(encode(self).map_err(|e| IoError {
+                kind: InvalidInput,
+                desc: "Failed to encode messages.",
+                detail: Some(e.description().to_owned()),
+            }))[])
         }
 
         pub fn add_message(&mut self, target: &str, message: &str, sender: &str) {
