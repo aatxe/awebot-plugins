@@ -1,11 +1,10 @@
-#![allow(unstable)]
-#![feature(slicing_syntax)]
+#![feature(collections, core, io, path, slicing_syntax, std_misc)]
 extern crate irc;
 extern crate "rustc-serialize" as rustc_serialize;
 extern crate time;
 
 
-use std::io::{BufferedReader, BufferedWriter, IoResult};
+use std::old_io::{BufferedReader, BufferedWriter, IoResult};
 use irc::client::conn::NetStream;
 use irc::client::data::{Command, Message};
 use irc::client::data::Command::PRIVMSG;
@@ -53,8 +52,8 @@ mod data {
     use std::collections::hash_map::Entry::{Occupied, Vacant};
     use std::error::Error;
     use std::string::ToString;
-    use std::io::{File, FilePermission, InvalidInput, IoError, IoResult};
-    use std::io::fs::mkdir_recursive;
+    use std::old_io::{File, FilePermission, InvalidInput, IoError, IoResult};
+    use std::old_io::fs::mkdir_recursive;
     use rustc_serialize::json::{decode, encode};
     use time::{Timespec, get_time};
 

@@ -1,12 +1,11 @@
-#![allow(unstable)]
-#![feature(plugin, slicing_syntax)]
+#![feature(collections, core, io, plugin, slicing_syntax)]
 extern crate irc;
 extern crate regex;
 #[plugin] extern crate regex_macros;
 
 use std::borrow::ToOwned;
-use std::io::Command as IoCommand;
-use std::io::{BufferedReader, BufferedWriter, IoResult};
+use std::old_io::Command as IoCommand;
+use std::old_io::{BufferedReader, BufferedWriter, IoResult};
 use irc::client::conn::NetStream;
 use irc::client::data::{Command, Message};
 use irc::client::data::Command::PRIVMSG;
@@ -52,7 +51,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
 #[cfg(test)]
 mod test {
     use std::default::Default;
-    use std::io::{MemReader, MemWriter};
+    use std::old_io::{MemReader, MemWriter};
     use irc::client::conn::Connection;
     use irc::client::server::{IrcServer, Server};
     use irc::client::server::utils::Wrapper;

@@ -1,8 +1,7 @@
-#![allow(unstable)]
-#![feature(slicing_syntax)]
+#![feature(core, slicing_syntax)]
 extern crate irc;
 
-use std::io::{BufferedReader, BufferedWriter, IoResult};
+use std::old_io::{BufferedReader, BufferedWriter, IoResult};
 use irc::client::conn::NetStream;
 use irc::client::data::{Message, Response};
 use irc::client::server::Server;

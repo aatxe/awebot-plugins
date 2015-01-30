@@ -1,9 +1,8 @@
-#![allow(unstable)]
-#![feature(slicing_syntax)]
+#![feature(collections, core, io, path, slicing_syntax)]
 extern crate irc;
 extern crate "rustc-serialize" as rustc_serialize;
 
-use std::io::{BufferedReader, BufferedWriter, IoResult};
+use std::old_io::{BufferedReader, BufferedWriter, IoResult};
 use irc::client::conn::NetStream;
 use irc::client::data::{Command, Message};
 use irc::client::data::Command::PRIVMSG;
@@ -48,8 +47,8 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
 mod data {
     use std::borrow::ToOwned;
     use std::error::Error;
-    use std::io::fs::{File, mkdir_recursive};
-    use std::io::{FilePermission, InvalidInput, IoError, IoResult};
+    use std::old_io::fs::{File, mkdir_recursive};
+    use std::old_io::{FilePermission, InvalidInput, IoError, IoResult};
     use rustc_serialize::json::{decode, encode};
     
     #[derive(RustcEncodable, RustcDecodable)]
@@ -94,7 +93,7 @@ mod data {
 #[cfg(test)]
 mod test {
     use std::default::Default;
-    use std::io::{MemReader, MemWriter};
+    use std::old_io::{MemReader, MemWriter};
     use irc::client::conn::Connection;
     use irc::client::server::{IrcServer, Server};
     use irc::client::server::utils::Wrapper;

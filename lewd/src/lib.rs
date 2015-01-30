@@ -1,8 +1,7 @@
-#![allow(unstable)]
-#![feature(slicing_syntax)]
+#![feature(rand, slicing_syntax)]
 extern crate irc;
 
-use std::io::{BufferedReader, BufferedWriter, IoResult};
+use std::old_io::{BufferedReader, BufferedWriter, IoResult};
 use std::rand::{thread_rng, Rng};
 use irc::client::conn::NetStream;
 use irc::client::data::{Command, Message};
@@ -50,7 +49,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
 mod test {
     use std::borrow::ToOwned;
     use std::default::Default;
-    use std::io::{MemReader, MemWriter};
+    use std::old_io::{MemReader, MemWriter};
     use irc::client::conn::Connection;
     use irc::client::server::{IrcServer, Server};
     use irc::client::server::utils::Wrapper;

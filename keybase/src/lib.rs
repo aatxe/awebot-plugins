@@ -1,10 +1,9 @@
-#![allow(unstable)]
-#![feature(slicing_syntax)]
+#![feature(collections, core, io, slicing_syntax)]
 extern crate irc;
 extern crate hyper;
 extern crate "rustc-serialize" as rustc_serialize;
 
-use std::io::{BufferedReader, BufferedWriter, IoResult};
+use std::old_io::{BufferedReader, BufferedWriter, IoResult};
 use hyper::Url;
 use hyper::client::Client;
 use irc::client::conn::NetStream;
@@ -63,7 +62,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
 mod data {
     use std::borrow::ToOwned;
     use std::error::Error;
-    use std::io::{IoError, IoErrorKind, IoResult};
+    use std::old_io::{IoError, IoErrorKind, IoResult};
     use rustc_serialize::json::decode;
 
     #[derive(RustcDecodable, Show)]

@@ -1,7 +1,7 @@
 #![feature(slicing_syntax)]
 extern crate irc;
 
-use std::io::{BufferedReader, BufferedWriter, IoResult};
+use std::old_io::{BufferedReader, BufferedWriter, IoResult};
 use irc::client::conn::NetStream;
 use irc::client::data::Message;
 use irc::client::data::kinds::{IrcReader, IrcWriter};
@@ -22,7 +22,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
 #[cfg(test)]
 mod test {
     use std::default::Default;
-    use std::io::{MemReader, MemWriter};
+    use std::old_io::{MemReader, MemWriter};
     use irc::client::conn::Connection;
     use irc::client::server::{IrcServer, Server};
     use irc::client::server::utils::Wrapper;
