@@ -159,7 +159,7 @@ mod data {
 #[cfg(test)]
 mod test {
     use std::default::Default;
-    use std::io::{MemReader, MemWriter};
+    use std::old_io::{MemReader, MemWriter};
     use irc::client::conn::Connection;
     use irc::client::server::{IrcServer, Server};
     use irc::client::server::utils::Wrapper;
