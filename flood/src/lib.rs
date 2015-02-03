@@ -23,7 +23,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
             let tokens: Vec<_> = msg.split_str(" ").collect();
             if tokens.len() >= 3 && tokens[0] == "@flood" {
                 let target = tokens[1];
-                if let Some(n) = tokens[2].parse() {
+                if let Ok(n) = tokens[2].parse() {
                     for i in range(0u8, n) {
                         if tokens.len() == 3 {
                             try!(server.send_privmsg(target, &format!("@flood ({})", i)[]));

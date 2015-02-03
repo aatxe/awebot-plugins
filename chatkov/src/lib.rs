@@ -1,4 +1,4 @@
-#![feature(collections, core, io, path, slicing_syntax)]
+#![feature(collections, io, path, slicing_syntax)]
 extern crate irc;
 extern crate markov;
 

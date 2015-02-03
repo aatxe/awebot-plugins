@@ -1,4 +1,4 @@
-#![feature(collections, core, rand, slicing_syntax)]
+#![feature(collections, rand, slicing_syntax)]
 extern crate irc;
 
 use std::old_io::{BufferedReader, BufferedWriter, IoResult};
