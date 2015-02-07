@@ -1,5 +1,6 @@
-#![feature(collections, core, io, path, rand, slicing_syntax)]
+#![feature(collections, core, io, path, slicing_syntax)]
 extern crate irc;
+extern crate rand;
 extern crate "rustc-serialize" as rustc_serialize;
 
 use std::old_io::{BufferedReader, BufferedWriter, IoResult};
@@ -36,7 +37,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
         } else if tokens[0] == "@quote" {
             let quotes = data::Quotes::load();
             let quote = if tokens.len() > 1 {
-                tokens[1].parse().and_then(|i| quotes.get_quote(i))
+                tokens[1].parse().ok().and_then(|i| quotes.get_quote(i))
             } else {
                 quotes.get_random_quote()
             };
@@ -57,9 +58,9 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
 mod data {
     use std::borrow::ToOwned;
     use std::error::Error;
-    use std::rand::{Rng, thread_rng}; 
     use std::old_io::{File, FilePermission, InvalidInput, IoError, IoResult};
     use std::old_io::fs::mkdir_recursive;
+    use rand::{Rng, thread_rng};
     use rustc_serialize::json::{decode, encode};
 
     #[derive(RustcEncodable, RustcDecodable)]

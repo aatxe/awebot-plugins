@@ -14,5 +14,8 @@ crate-type = ["dylib"]
 irc = "*"
 default-features = false
 
+[dependencies.rand]
+rand = "*"
+
 [dependencies.rustc-serialize]
 rustc-serialize = "*"
