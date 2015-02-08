@@ -20,7 +20,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
     where T: IrcReader, U: IrcWriter {
     if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
         if msg.starts_with("@users") {
-            let stringify = |:users: Vec<User>| -> String {
+            let stringify = |users: Vec<User>| -> String {
                 let mut ret = String::new();
                 for user in users.into_iter() {
                     if user.get_name().len() == 0 { continue }
