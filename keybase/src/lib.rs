@@ -205,7 +205,8 @@ mod test {
             println!("{:?}", message);
             super::process_internal(&Wrapper::new(&server), &message).unwrap();
         }
-        String::from_utf8(server.conn().writer().get_ref().to_vec()).unwrap()
+        let vec = server.conn().writer().get_ref().to_vec();
+        String::from_utf8(vec).unwrap()
     }
     
     #[test]
