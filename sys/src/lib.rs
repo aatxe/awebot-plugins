@@ -1,7 +1,7 @@
 #![feature(collections, core, io, plugin, slicing_syntax)]
+#![plugin(regex_macros)]
 extern crate irc;
 extern crate regex;
-#[plugin] extern crate regex_macros;
 
 use std::borrow::ToOwned;
 use std::old_io::Command as IoCommand;
