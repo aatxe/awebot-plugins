@@ -1,46 +1,32 @@
 language: rust
 script:
-  - cd chatkov
-  - cargo build --verbose
+  - cd chatkov 
   - cargo test --verbose
   - cd ../choose
-  - cargo build --verbose
   - cargo test --verbose
   - cd ../ddg
-  - cargo build --verbose
   - cargo test --verbose
   - cd ../flood
-  - cargo build --verbose
   - cargo test --verbose
   - cd ../keybase
-  - cargo build --verbose
   - cargo test --verbose
   - cd ../lewd
-  - cargo build --verbose
   - cargo test --verbose
   - cd ../presence
-  - cargo build --verbose
   - cargo test --verbose
   - cd ../puppet
-  - cargo build --verbose
   - cargo test --verbose
   - cd ../quote
-  - cargo build --verbose
   - cargo test --verbose
   - cd ../reclaim
-  - cargo build --verbose
   - cargo test --verbose
   - cd ../sys
-  - cargo build --verbose
   - cargo test --verbose
   - cd ../tell
-  - cargo build --verbose
   - cargo test --verbose
   - cd ../users
-  - cargo build --verbose
   - cargo test --verbose
   - cd ../whois
-  - cargo build --verbose
   - cargo test --verbose
   - cd ..
 notifications:
