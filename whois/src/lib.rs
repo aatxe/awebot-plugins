@@ -1,4 +1,4 @@
-#![feature(collections, core, io, path, slicing_syntax)]
+#![feature(collections, core, old_io, old_path)]
 extern crate irc;
 extern crate "rustc-serialize" as rustc_serialize;
 
@@ -31,14 +31,14 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
                 Ok(_) => format!("{}: Got it!", user),
                 Err(_) => format!("{}: Something went wrong.", user),
             };
-            try!(server.send_privmsg(resp, &msg[]));
+            try!(server.send_privmsg(resp, &msg));
         } else if msg.starts_with("@whois ") {
             let tokens: Vec<_> = msg.split_str(" ").collect();
             let msg = match data::WhoIs::load(tokens[1]) {
                 Ok(whois) => format!("{}: {} is {}", user, whois.nickname, whois.description),
                 Err(_) => format!("{}: I don't know who {} is.", user, tokens[1]),
             };
-            try!(server.send_privmsg(resp, &msg[]));
+            try!(server.send_privmsg(resp, &msg));
         }
     }
     Ok(())
@@ -66,9 +66,9 @@ mod data {
             let mut path = "data/whois/".to_owned();
             path.push_str(nickname);
             path.push_str(".json");
-            let mut file = try!(File::open(&Path::new(&path[])));
+            let mut file = try!(File::open(&Path::new(&path)));
             let data = try!(file.read_to_string());
-            decode(&data[]).map_err(|e| IoError {
+            decode(&data).map_err(|e| IoError {
                 kind: InvalidInput,
                 desc: "Failed to decode whois data.",
                 detail: Some(e.description().to_owned()),
@@ -77,15 +77,15 @@ mod data {
 
         pub fn save(&self) -> IoResult<()> {
             let mut path = "data/whois/".to_owned();
-            try!(mkdir_recursive(&Path::new(&path[]), FilePermission::all()));
-            path.push_str(&self.nickname[]);
+            try!(mkdir_recursive(&Path::new(&path), FilePermission::all()));
+            path.push_str(&self.nickname);
             path.push_str(".json");
-            let mut f = File::create(&Path::new(&path[]));
+            let mut f = File::create(&Path::new(&path));
             f.write_str(&try!(encode(self).map_err(|e| IoError {
                 kind: InvalidInput,
                 desc: "Failed to encode whois data.",
                 detail: Some(e.description().to_owned()),
-            }))[])
+            }))[..])
         }
     }
 }

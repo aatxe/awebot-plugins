@@ -1,4 +1,4 @@
-#![feature(collections, slicing_syntax)]
+#![feature(collections, old_io)]
 extern crate irc;
 
 use std::old_io::{BufferedReader, BufferedWriter, IoResult};
@@ -24,13 +24,13 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
             if tokens.contains(&"join") {
                 for token in tokens.iter() {
                     if token.starts_with("#") {
-                        try!(server.send_join(&token[]));
+                        try!(server.send_join(&token));
                     }
                 }
             } else if tokens.contains(&"part") {
                 for token in tokens.iter() {
                     if token.starts_with("#") {
-                        try!(server.send(PART(&token[], None)));
+                        try!(server.send(PART(&token, None)));
                     }
                 }
             }
@@ -68,12 +68,12 @@ mod test {
     #[test]
     fn join() {
         let data = test_helper(":test!test@test PRIVMSG #test :join #test #test2\r\n");
-        assert_eq!(&data[], "JOIN #test\r\nJOIN #test2\r\n");
+        assert_eq!(&data[..], "JOIN #test\r\nJOIN #test2\r\n");
     }
 
     #[test]
     fn part() {
         let data = test_helper(":test!test@test PRIVMSG #test :part #test #test2\r\n");
-        assert_eq!(&data[], "PART #test\r\nPART #test2\r\n");
+        assert_eq!(&data[..], "PART #test\r\nPART #test2\r\n");
     }
 }

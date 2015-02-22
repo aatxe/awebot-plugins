@@ -1,4 +1,4 @@
-#![feature(slicing_syntax)]
+#![feature(old_io)]
 extern crate irc;
 
 use std::old_io::{BufferedReader, BufferedWriter, IoResult};

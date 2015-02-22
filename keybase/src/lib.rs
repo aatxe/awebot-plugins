@@ -1,4 +1,4 @@
-#![feature(collections, core, io, slicing_syntax)]
+#![feature(collections, core, old_io)]
 extern crate irc;
 extern crate hyper;
 extern crate "rustc-serialize" as rustc_serialize;
@@ -28,13 +28,13 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
             let url = format!("https://keybase.io/_/api/1.0/user/lookup.json?usernames={}&fields={\
                               }", tokens[1], "proofs_summary,public_keys");
             let mut client = Client::new();
-            let res = client.get(Url::parse(&url[]).unwrap()).send().unwrap()
+            let res = client.get(Url::parse(&url).unwrap()).send().unwrap()
                             .read_to_string().unwrap();
-            let lookup = data::LookUp::decode(&res[]);
+            let lookup = data::LookUp::decode(&res);
             if let Ok(lookup) = lookup {
                 if tokens.len() == 2 {
                     try!(server.send_privmsg(chan, &format!("{}: Keybase: {} {}", user, tokens[1],
-                                                            lookup.display())[]));
+                                                            lookup.display())));
                 } else if tokens[2].len() > 0 {
                     let value = lookup.display_type(tokens[2]);
                     println!("{}", tokens[2]);
@@ -49,10 +49,10 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
                             format!("{}: {} is {} on {}.", user, tokens[1], res, tokens[2])
                         },
                         None => format!("{}: {} has no proof for {}.", user, tokens[1], tokens[2]),
-                    }[]));
+                    }[..]));
                 }
             } else {
-                try!(server.send_privmsg(chan, &format!("{}: Something went wrong!", user)[]));
+                try!(server.send_privmsg(chan, &format!("{}: Something went wrong!", user)));
             }
         }  
     }
@@ -65,7 +65,7 @@ mod data {
     use std::old_io::{IoError, IoErrorKind, IoResult};
     use rustc_serialize::json::decode;
 
-    #[derive(RustcDecodable, Show)]
+    #[derive(RustcDecodable, Debug)]
     pub struct LookUp {
         them: Option<Vec<Keybase>>
     }
@@ -88,7 +88,7 @@ mod data {
         }
     }
 
-    #[derive(RustcDecodable, Show)]
+    #[derive(RustcDecodable, Debug)]
     pub struct Keybase {
         id: String,
         public_keys: PublicKeys,
@@ -109,7 +109,7 @@ mod data {
         }
     }
 
-    #[derive(RustcDecodable, Show)]
+    #[derive(RustcDecodable, Debug)]
     pub struct PublicKeys {
         primary: PublicKey
     }
@@ -120,7 +120,7 @@ mod data {
         }
     }
 
-    #[derive(RustcDecodable, Show)]
+    #[derive(RustcDecodable, Debug)]
     pub struct PublicKey {
         key_fingerprint: String,
     }
@@ -132,7 +132,7 @@ mod data {
         }
     }
 
-    #[derive(RustcDecodable, Show)]
+    #[derive(RustcDecodable, Debug)]
     pub struct ProofSummary {
         all: Vec<Proof>
     }
@@ -141,7 +141,7 @@ mod data {
         pub fn display(&self) -> String {
             let mut ret = String::new();
             for proof in self.all.iter() {
-                ret.push_str(&proof.display()[]);
+                ret.push_str(&proof.display());
                 ret.push_str(" ");
             }
             if self.all.len() == 0 { return String::new() }
@@ -152,8 +152,8 @@ mod data {
 
         pub fn display_type(&self, kind: &str) -> Option<String> {
             let mut ret = String::new();
-            for proof in self.all.iter().filter(|p| &p.proof_type[] == kind) {
-                ret.push_str(&proof.nametag[]);
+            for proof in self.all.iter().filter(|p| &p.proof_type[..] == kind) {
+                ret.push_str(&proof.nametag);
                 ret.push_str(" ");
             }
             let len = ret.len() - 1;
@@ -166,7 +166,7 @@ mod data {
         }
     }
 
-    #[derive(RustcDecodable, Show)]
+    #[derive(RustcDecodable, Debug)]
     pub struct Proof {
         proof_type: String,
         nametag: String,
@@ -174,7 +174,7 @@ mod data {
 
     impl Proof {
         pub fn display(&self) -> String {
-            format!("{}: {}", match &self.proof_type[] {
+            format!("{}: {}", match &self.proof_type[..] {
                 "twitter"          => "Twitter",
                 "github"           => "GitHub",
                 "reddit"           => "Reddit",
@@ -182,7 +182,7 @@ mod data {
                 "coinbase"         => "Coinbase",
                 "dns"              => "Website",
                 "generic_web_site" => "Website",
-                _                  => &self.proof_type[]
+                _                  => &self.proof_type[..]
             }, self.nametag)
         }
     }
@@ -212,7 +212,7 @@ mod test {
     #[test]
     fn keybase_lookup() {
         let data = test_helper(":test!test@test PRIVMSG #test :@keybase awe\r\n");
-        assert_eq!(&data[], "PRIVMSG #test :test: Keybase: awe Twitter: aatxe GitHub: aatxe \
+        assert_eq!(&data[..], "PRIVMSG #test :test: Keybase: awe Twitter: aatxe GitHub: aatxe \
                             Reddit: aaronweiss74 Coinbase: coinbase/awe Website: deviant-core.net \
                             Website: pdgn.co Website: aaronweiss.us\r\n"); 
     }
@@ -220,19 +220,19 @@ mod test {
     #[test]
     fn keybase_lookup_key() {
         let data = test_helper(":test!test@test PRIVMSG #test :@keybase awe key\r\n");
-        assert_eq!(&data[], "PRIVMSG #test :test: awe's fingerprint is a943ba9f204c61be.\r\n");
+        assert_eq!(&data[..], "PRIVMSG #test :test: awe's fingerprint is a943ba9f204c61be.\r\n");
     }
 
     #[test]
     fn keybase_lookup_dns() {
         let data = test_helper(":test!test@test PRIVMSG #test :@keybase awe dns\r\n");
-        assert_eq!(&data[], "PRIVMSG #test :test: awe has the following domains: deviant-core.net \
+        assert_eq!(&data[..], "PRIVMSG #test :test: awe has the following domains: deviant-core.net \
                             pdgn.co aaronweiss.us\r\n");
     }
 
     #[test]
     fn keybase_lookup_github() {
         let data = test_helper(":test!test@test PRIVMSG #test :@keybase awe github\r\n");
-        assert_eq!(&data[], "PRIVMSG #test :test: awe is aatxe on github.\r\n");
+        assert_eq!(&data[..], "PRIVMSG #test :test: awe is aatxe on github.\r\n");
     }
 }

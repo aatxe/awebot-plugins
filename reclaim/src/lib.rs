@@ -1,4 +1,4 @@
-#![feature(slicing_syntax)]
+#![feature(old_io)]
 extern crate irc;
 
 use std::old_io::{BufferedReader, BufferedWriter, IoResult};
@@ -24,7 +24,7 @@ pub fn process<'a>(server: &'a Wrapper<'a, BufferedReader<NetStream>, BufferedWr
             if count > 10 {
                 try!(server.send_privmsg(
                     "Pidgey", &format!("NS RECLAIM {} {}", server.config().nickname(), 
-                                       server.config().nick_password())[]
+                                       server.config().nick_password())
                 ));
                 flag = false;
             }

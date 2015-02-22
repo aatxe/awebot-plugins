@@ -1,4 +1,4 @@
-#![feature(collections, core, io, plugin, slicing_syntax)]
+#![feature(collections, core, old_io, plugin)]
 #![plugin(regex_macros)]
 extern crate irc;
 extern crate regex;
@@ -30,17 +30,17 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
                 let msg = match IoCommand::new(tokens[1]).args(&tokens[2..]).spawn() {
                     Ok(mut p) => if let Ok(vec) = p.stdout.as_mut().unwrap().read_to_end() {
                         let re = regex!(r"[\s]");
-                        re.replace_all(&String::from_utf8_lossy(&vec[]).to_owned()[], " ")
+                        re.replace_all(&String::from_utf8_lossy(&vec).to_owned(), " ")
                           .to_owned()
                     } else {
                         format!("Failed to execute command for an unknown reason.")
                     },
                     Err(e) => format!("Failed to execute command; {}.", e),
                 };
-                if &msg[] == "" {
+                if &msg[..] == "" {
                     try!(server.send_privmsg(chan, "No output."));
                 } else {
-                    try!(server.send_privmsg(chan, &msg[]));
+                    try!(server.send_privmsg(chan, &msg));
                 }
             }
         } 

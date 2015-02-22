@@ -13,3 +13,6 @@ crate-type = ["dylib"]
 irc = "*"
 default-features = false
 
+[dependencies.rand]
+rand = "*"
+

@@ -1,4 +1,4 @@
-#![feature(collections, core, io, path, slicing_syntax, std_misc)]
+#![feature(collections, core, old_io, old_path, std_misc)]
 extern crate irc;
 extern crate "rustc-serialize" as rustc_serialize;
 extern crate time;
@@ -34,13 +34,13 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
             let message = &msg[7+tokens[1].len()..];
             messages.add_message(tokens[1], message, user);
             let _ = messages.save();
-            try!(server.send_privmsg(resp, &format!("{}: I'll let them know!", user)[]));
+            try!(server.send_privmsg(resp, &format!("{}: I'll let them know!", user)));
         } else if tokens[0] == "@tell" && tokens.len() > 1 
                && tokens[1] == server.config().nickname() {
-            try!(server.send_privmsg(resp, &format!("{}: I'm right here!", user)[]));
+            try!(server.send_privmsg(resp, &format!("{}: I'm right here!", user)));
         }
         for msg in messages.get_messages(user).iter() {
-            try!(server.send_privmsg(resp, &msg.to_string()[]));
+            try!(server.send_privmsg(resp, &msg.to_string()));
         }
     }
     Ok(())
@@ -74,7 +74,7 @@ mod data {
         fn load_internal() -> IoResult<Messages> {
             let mut file = try!(File::open(&Path::new("data/messages.json")));
             let data = try!(file.read_to_string());
-            decode(&data[]).map_err(|e| IoError {
+            decode(&data).map_err(|e| IoError {
                 kind: InvalidInput,
                 desc: "Failed to decode messages.",
                 detail: Some(e.description().to_owned()),
@@ -88,7 +88,7 @@ mod data {
                 kind: InvalidInput,
                 desc: "Failed to encode messages.",
                 detail: Some(e.description().to_owned()),
-            }))[])
+            }))[..])
         }
 
         pub fn add_message(&mut self, target: &str, message: &str, sender: &str) {

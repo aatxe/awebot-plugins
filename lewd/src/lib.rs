@@ -1,13 +1,14 @@
-#![feature(rand, slicing_syntax)]
+#![feature(old_io)]
 extern crate irc;
+extern crate rand;
 
 use std::old_io::{BufferedReader, BufferedWriter, IoResult};
-use std::rand::{thread_rng, Rng};
 use irc::client::conn::NetStream;
 use irc::client::data::{Command, Message};
 use irc::client::data::Command::PRIVMSG;
 use irc::client::data::kinds::{IrcReader, IrcWriter};
 use irc::client::server::utils::Wrapper;
+use rand::{thread_rng, Rng};
 
 static MESSAGES: &'static [&'static str] = 
 &[ "Hey, baby. Want some fuck?"
@@ -71,6 +72,6 @@ mod test {
     fn lewd() {
         let data = test_helper(":test!test@test PRIVMSG #test :test\r\n");
         assert!(super::MESSAGES.iter().map(|s| format!("PRIVMSG test :{}\r\n", s))
-                .collect::<Vec<_>>().contains(&data.to_owned()) || &data[] == "");
+                .collect::<Vec<_>>().contains(&data.to_owned()) || &data[..] == "");
     }
 }

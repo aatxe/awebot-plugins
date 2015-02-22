@@ -1,4 +1,4 @@
-#![feature(collections, io, path, slicing_syntax)]
+#![feature(collections, old_io, old_path)]
 extern crate irc;
 extern crate markov;
 
@@ -25,7 +25,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
         let path = Path::new("data/chatkov");
         if !msg.starts_with("@") {
             let mut file = File::open_mode(&path, FileMode::Append, FileAccess::Write);
-            try!(file.write_line(&msg.replace(".", "\n")[]));
+            try!(file.write_line(&msg.replace(".", "\n")));
         } else if tokens[0] == "@markov" {
             let mut chain = Chain::for_strings();
             chain.feed_file(&path);
@@ -35,10 +35,10 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
                 chain.generate_str()
             };
             try!(server.send_privmsg(chan, &format!("{}: {}", user, if msg.len() > 0 { 
-                &msg[] 
+                &msg[..]
             } else {
                 "That seed is unknown."
-            })[]));
+            })));
         }
     }
     Ok(())

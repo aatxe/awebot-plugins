@@ -1,4 +1,4 @@
-#![feature(collections , slicing_syntax)]
+#![feature(collections, old_io)]
 extern crate irc;
 
 use std::old_io::{BufferedReader, BufferedWriter, IoResult};
@@ -63,13 +63,13 @@ mod test {
     #[test]
     fn puppet_channel() {
         let data = test_helper(":test!test@test PRIVMSG test :#test Hi there, friend.\r\n");
-        assert_eq!(&data[], "PRIVMSG #test :Hi there, friend.\r\n");
+        assert_eq!(&data[..], "PRIVMSG #test :Hi there, friend.\r\n");
     }
 
     #[test]
     fn puppet_query() {
         let data = test_helper(":test!test@test PRIVMSG test :$test Hi there, friend.\r\n");
-        assert_eq!(&data[], "PRIVMSG test :Hi there, friend.\r\n");
+        assert_eq!(&data[..], "PRIVMSG test :Hi there, friend.\r\n");
     }
 
 }

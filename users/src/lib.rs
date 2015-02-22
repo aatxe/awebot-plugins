@@ -1,4 +1,4 @@
-#![feature(slicing_syntax)]
+#![feature(old_io)]
 extern crate irc;
 
 use std::old_io::{BufferedReader, BufferedWriter, IoResult};
@@ -49,7 +49,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
                 ret
             };
             let users = server.list_users(chan).unwrap();
-            try!(server.send_privmsg(chan, &format!("Users: {}", stringify(users))[]));
+            try!(server.send_privmsg(chan, &format!("Users: {}", stringify(users))));
         }   
     }
     Ok(())

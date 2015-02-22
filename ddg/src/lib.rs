@@ -1,4 +1,4 @@
-#![feature(core, slicing_syntax)]
+#![feature(old_io)]
 extern crate irc;
 extern crate url;
 
@@ -23,7 +23,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
         if msg.starts_with("@ddg ") {
             let search = utf8_percent_encode(&msg[5..], DEFAULT_ENCODE_SET);
             try!(server.send_privmsg(chan, &format!("{}: https://duckduckgo.com/?q={}", 
-                                     user, search.replace("%20", "+"))[]));
+                                                    user, search.replace("%20", "+"))));
         }
     }
     Ok(())
@@ -53,12 +53,12 @@ mod test {
     #[test]
     fn basic_search() {
         let data = test_helper(":test!test@test PRIVMSG #test :@ddg Apple\r\n");
-        assert_eq!(&data[], "PRIVMSG #test :test: https://duckduckgo.com/?q=Apple\r\n"); 
+        assert_eq!(&data[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=Apple\r\n"); 
     }
 
     #[test]
     fn search_with_spaces() {
         let data = test_helper(":test!test@test PRIVMSG #test :@ddg !w Edward Snowden\r\n");
-        assert_eq!(&data[], "PRIVMSG #test :test: https://duckduckgo.com/?q=!w+Edward+Snowden\r\n"); 
+        assert_eq!(&data[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=!w+Edward+Snowden\r\n"); 
     }
 }

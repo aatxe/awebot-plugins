@@ -1,13 +1,14 @@
-#![feature(collections, rand, slicing_syntax)]
+#![feature(collections, old_io)]
 extern crate irc;
+extern crate rand;
 
 use std::old_io::{BufferedReader, BufferedWriter, IoResult};
-use std::rand::{thread_rng, sample};
 use irc::client::conn::NetStream;
 use irc::client::data::{Command, Message};
 use irc::client::data::Command::PRIVMSG;
 use irc::client::data::kinds::{IrcReader, IrcWriter};
 use irc::client::server::utils::Wrapper;
+use rand::{thread_rng, sample};
 
 #[no_mangle]
 pub fn process<'a>(server: &'a Wrapper<'a, BufferedReader<NetStream>, BufferedWriter<NetStream>>, 
@@ -21,7 +22,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
     if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
         if msg.starts_with("@choose ") {            
             let res = sample(&mut thread_rng(), msg[8..].split_str(" or "), 1);
-            try!(server.send_privmsg(chan, &format!("{}: {}", user, res[0])[]));
+            try!(server.send_privmsg(chan, &format!("{}: {}", user, res[0])));
         } 
     }
     Ok(())
@@ -52,7 +53,7 @@ mod test {
     fn choose_from_two() {
         let data = test_helper(":test!test@test PRIVMSG #test :@choose this or that\r\n");
         assert!(["PRIVMSG #test :test: this\r\n", "PRIVMSG #test :test: that\r\n"]
-                .contains(&&data[]));    
+                .contains(&&data[..]));    
     }
 
     #[test]
@@ -60,6 +61,6 @@ mod test {
         let data = test_helper(":test!test@test PRIVMSG #test :@choose this or that or the other \
                                 thing\r\n");
         assert!(["PRIVMSG #test :test: this\r\n", "PRIVMSG #test :test: that\r\n", 
-                "PRIVMSG #test :test: the other thing\r\n"].contains(&&data[]));
+                "PRIVMSG #test :test: the other thing\r\n"].contains(&&data[..]));
     }
 }

@@ -1,4 +1,4 @@
-#![feature(collections, core, io, path, slicing_syntax)]
+#![feature(collections, core, old_io, old_path)]
 extern crate irc;
 extern crate rand;
 extern crate "rustc-serialize" as rustc_serialize;
@@ -33,7 +33,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
             quotes.add_quote(quote, tokens[1]);
             let _ = quotes.save();
             try!(server.send_privmsg(resp, &format!("{}: I'll remember it as #{}.", user, 
-                                                    quotes.get_latest_index())[]));
+                                                    quotes.get_latest_index())));
         } else if tokens[0] == "@quote" {
             let quotes = data::Quotes::load();
             let quote = if tokens.len() > 1 {
@@ -43,7 +43,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
             };
             match quote {
                 Some(q) => 
-                    try!(server.send_privmsg(resp, &format!("<{}> {}", q.sender, q.message)[])),
+                    try!(server.send_privmsg(resp, &format!("<{}> {}", q.sender, q.message))),
                 None => try!(server.send_privmsg(resp, if tokens.len() > 1 {
                     "There is no such quote."
                 } else {
@@ -80,7 +80,7 @@ mod data {
         fn load_internal() -> IoResult<Quotes> {
             let mut file = try!(File::open(&Path::new("data/quotes.json")));
             let data = try!(file.read_to_string());
-            decode(&data[]).map_err(|e| IoError {
+            decode(&data).map_err(|e| IoError {
                 kind: InvalidInput,
                 desc: "Failed to decode quotes.",
                 detail: Some(e.description().to_owned()),
@@ -94,7 +94,7 @@ mod data {
                 kind: InvalidInput,
                 desc: "Failed to encode quotes.",
                 detail: Some(e.description().to_owned()),
-            }))[])
+            }))[..])
         }
 
         pub fn add_quote(&mut self, message: &str, sender: &str) {
@@ -106,7 +106,7 @@ mod data {
         }
 
         pub fn get_random_quote(&self) -> Option<&Quote> {
-            thread_rng().choose(&self.quotes[])
+            thread_rng().choose(&self.quotes)
         }
 
         pub fn get_latest_index(&self) -> usize {
