@@ -1,23 +1,21 @@
-#![feature(old_io)]
+#![feature(io)]
 extern crate irc;
 
-use std::old_io::{BufferedReader, BufferedWriter, IoResult};
+use std::io::{BufReader, BufWriter, Result};
 use irc::client::conn::NetStream;
-use irc::client::data::{Command, Message, User};
+use irc::client::data::User;
 use irc::client::data::Command::PRIVMSG;
-use irc::client::data::kinds::{IrcReader, IrcWriter};
 use irc::client::data::AccessLevel::*;
-use irc::client::server::Server;
-use irc::client::server::utils::Wrapper;
+use irc::client::prelude::*;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a Wrapper<'a, BufferedReader<NetStream>, BufferedWriter<NetStream>>, 
-                   message: Message) -> IoResult<()> {
+pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>, 
+                   message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) -> IoResult<()> 
-    where T: IrcReader, U: IrcWriter {
+pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()> 
+    where T: IrcRead, U: IrcWrite {
     if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
         if msg.starts_with("@users") {
             let stringify = |users: Vec<User>| -> String {
@@ -48,8 +46,8 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
                 }
                 ret
             };
-            let users = server.list_users(chan).unwrap();
-            try!(server.send_privmsg(chan, &format!("Users: {}", stringify(users))));
+            let users = server.list_users(&chan).unwrap();
+            try!(server.send_privmsg(&chan, &format!("Users: {}", stringify(users))));
         }   
     }
     Ok(())
@@ -58,21 +56,20 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
 #[cfg(test)]
 mod test {
     use std::default::Default;
-    use std::old_io::{MemReader, MemWriter};
+    use std::io::Cursor;
     use irc::client::conn::Connection;
-    use irc::client::server::{IrcServer, Server};
-    use irc::client::server::utils::Wrapper;
+    use irc::client::prelude::*;
 
     fn test_helper(input: &str) -> String {
         let server = IrcServer::from_connection(Default::default(), Connection::new(
-            MemReader::new(input.as_bytes().to_vec()), MemWriter::new()
+            Cursor::new(input.as_bytes().to_vec()), Vec::new()
         ));
         for message in server.iter() {
             let message = message.unwrap();
             println!("{:?}", message);
-            super::process_internal(&Wrapper::new(&server), &message).unwrap();
+            super::process_internal(&server, &message).unwrap();
         }
-        let vec = server.conn().writer().get_ref().to_vec();
+        let vec = server.conn().writer().to_vec();
         String::from_utf8(vec).unwrap() 
     }
     

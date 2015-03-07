@@ -1,44 +1,44 @@
-#![feature(collections, core, old_io)]
+#![feature(core, io)]
 extern crate irc;
 extern crate hyper;
 extern crate "rustc-serialize" as rustc_serialize;
 
-use std::old_io::{BufferedReader, BufferedWriter, IoResult};
+use std::io::{BufReader, BufWriter, Result};
+use std::io::prelude::*;
 use hyper::Url;
 use hyper::client::Client;
 use irc::client::conn::NetStream;
-use irc::client::data::{Command, Message};
 use irc::client::data::Command::PRIVMSG;
-use irc::client::data::kinds::{IrcReader, IrcWriter};
-use irc::client::server::utils::Wrapper;
+use irc::client::prelude::*;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a Wrapper<'a, BufferedReader<NetStream>, BufferedWriter<NetStream>>, 
-                   message: Message) -> IoResult<()> {
+pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>, 
+                   message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) -> IoResult<()> 
-    where T: IrcReader, U: IrcWriter {
+pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()> 
+    where T: IrcRead, U: IrcWrite {
     let user = msg.get_source_nickname().unwrap_or("");
     if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
-        let tokens: Vec<_> = msg.split_str(" ").collect();
+        let tokens: Vec<_> = msg.split(" ").collect();
         if tokens[0] == "@keybase" && (tokens.len() == 2 || tokens.len() == 3) 
         && tokens[1].len() > 0 {
             let url = format!("https://keybase.io/_/api/1.0/user/lookup.json?usernames={}&fields={\
                               }", tokens[1], "proofs_summary,public_keys");
             let mut client = Client::new();
-            let res = client.get(Url::parse(&url).unwrap()).send().unwrap()
-                            .read_to_string().unwrap();
+            let mut result = client.get(Url::parse(&url).unwrap()).send().unwrap();
+            let mut res = String::new();
+            try!(result.read_to_string(&mut res));
             let lookup = data::LookUp::decode(&res);
             if let Ok(lookup) = lookup {
                 if tokens.len() == 2 {
-                    try!(server.send_privmsg(chan, &format!("{}: Keybase: {} {}", user, tokens[1],
-                                                            lookup.display())));
+                    try!(server.send_privmsg(&chan, &format!("{}: Keybase: {} {}", user, tokens[1],
+                                                             lookup.display())));
                 } else if tokens[2].len() > 0 {
                     let value = lookup.display_type(tokens[2]);
                     println!("{}", tokens[2]);
-                    try!(server.send_privmsg(chan, &match value {
+                    try!(server.send_privmsg(&chan, &match value {
                         Some(ref res) if tokens[2] == "dns" || tokens[2] == "generic_web_site" => {
                             format!("{}: {} has the following domains: {}", user, tokens[1], res)
                         },
@@ -52,7 +52,7 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
                     }[..]));
                 }
             } else {
-                try!(server.send_privmsg(chan, &format!("{}: Something went wrong!", user)));
+                try!(server.send_privmsg(&chan, &format!("{}: Something went wrong!", user)));
             }
         }  
     }
@@ -61,8 +61,8 @@ pub fn process_internal<'a, T, U>(server: &'a Wrapper<'a, T, U>, msg: &Message) 
 
 mod data {
     use std::borrow::ToOwned;
-    use std::error::Error;
-    use std::old_io::{IoError, IoErrorKind, IoResult};
+    use std::error::Error as StdError;
+    use std::io::{Error, ErrorKind, Result};
     use rustc_serialize::json::decode;
 
     #[derive(RustcDecodable, Debug)]
@@ -71,12 +71,11 @@ mod data {
     }
 
     impl LookUp {
-        pub fn decode(string: &str) -> IoResult<LookUp> {
-            decode(string).map_err(|e| IoError {
-                kind: IoErrorKind::InvalidInput,
-                desc: "Failed to decode configuration file.",
-                detail: Some(e.description().to_owned()),
-            })
+        pub fn decode(string: &str) -> Result<LookUp> {
+            decode(string).map_err(|e| 
+                Error::new(ErrorKind::InvalidInput, "Failed to decode keybase results.",
+                           Some(e.description().to_owned()))
+            )
         }
 
         pub fn display(&self) -> String {
@@ -191,24 +190,23 @@ mod data {
 #[cfg(test)]
 mod test {
     use std::default::Default;
-    use std::old_io::{MemReader, MemWriter};
+    use std::io::Cursor;
     use irc::client::conn::Connection;
-    use irc::client::server::{IrcServer, Server};
-    use irc::client::server::utils::Wrapper;
+    use irc::client::prelude::*;
 
     fn test_helper(input: &str) -> String {
         let server = IrcServer::from_connection(Default::default(), Connection::new(
-            MemReader::new(input.as_bytes().to_vec()), MemWriter::new()
+            Cursor::new(input.as_bytes().to_vec()), Vec::new()
         ));
         for message in server.iter() {
             let message = message.unwrap();
             println!("{:?}", message);
-            super::process_internal(&Wrapper::new(&server), &message).unwrap();
+            super::process_internal(&server, &message).unwrap();
         }
-        let vec = server.conn().writer().get_ref().to_vec();
-        String::from_utf8(vec).unwrap()
+        let vec = server.conn().writer().to_vec();
+        String::from_utf8(vec).unwrap() 
     }
-    
+
     #[test]
     fn keybase_lookup() {
         let data = test_helper(":test!test@test PRIVMSG #test :@keybase awe\r\n");
