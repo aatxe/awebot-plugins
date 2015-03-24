@@ -1,4 +1,3 @@
-#![feature(io)]
 extern crate irc;
 extern crate rand;
 

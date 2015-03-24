@@ -1,4 +1,4 @@
-#![feature(core, io, path)]
+#![feature(core, io)]
 extern crate irc;
 extern crate "rustc-serialize" as rustc_serialize;
 

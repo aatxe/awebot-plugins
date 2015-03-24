@@ -1,4 +1,4 @@
-#![feature(io, plugin)]
+#![feature(plugin)]
 #![plugin(regex_macros)]
 extern crate irc;
 extern crate regex;
