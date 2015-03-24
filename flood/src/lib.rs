@@ -1,4 +1,3 @@
-#![feature(core, io)]
 extern crate irc;
 
 use std::io::{BufReader, BufWriter, Result};
@@ -21,7 +20,7 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
             if tokens.len() >= 3 && tokens[0] == "@flood" {
                 let target = tokens[1];
                 if let Ok(n) = tokens[2].parse() {
-                    for i in range(0u8, n) {
+                    for i in 0..n {
                         if tokens.len() == 3 {
                             try!(server.send_privmsg(target, &format!("@flood ({})", i)));
                         } else {
