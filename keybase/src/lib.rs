@@ -1,7 +1,7 @@
-#![feature(core, io)]
+#![feature(io)]
 extern crate irc;
 extern crate hyper;
-extern crate "rustc-serialize" as rustc_serialize;
+extern crate rustc_serialize;
 
 use std::io::{BufReader, BufWriter, Result};
 use std::io::prelude::*;

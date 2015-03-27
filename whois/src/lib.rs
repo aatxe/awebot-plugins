@@ -1,6 +1,6 @@
-#![feature(core, io)]
+#![feature(io)]
 extern crate irc;
-extern crate "rustc-serialize" as rustc_serialize;
+extern crate rustc_serialize;
 
 use std::io::{BufReader, BufWriter, Result};
 use irc::client::conn::NetStream;

@@ -1,4 +1,3 @@
-#![feature(io, path)]
 extern crate irc;
 extern crate markov;
 
