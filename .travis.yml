@@ -30,8 +30,7 @@ script:
   - cargo test --verbose
   - cd ..
 notifications:
-  email:
-    on_success: never
+  email: false
   irc:
     channels:
       - "irc.fyrechat.net#vana-commits"
