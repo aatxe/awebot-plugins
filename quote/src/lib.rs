@@ -1,4 +1,3 @@
-#![feature(io)]
 extern crate irc;
 extern crate rand;
 extern crate rustc_serialize;
@@ -54,7 +53,6 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
 
 mod data {
     use std::borrow::ToOwned;
-    use std::error::Error as StdError;
     use std::fs::{File, create_dir_all};
     use std::io::{Error, ErrorKind, Result};
     use std::io::prelude::*;
@@ -80,19 +78,17 @@ mod data {
             let mut file = try!(File::open(&Path::new("data/quotes.json")));
             let mut data = String::new();
             try!(file.read_to_string(&mut data));
-            decode(&data).map_err(|e| 
-                Error::new(ErrorKind::InvalidInput, "Failed to decode quotes.",
-                           Some(e.description().to_owned()))
-            )
+            decode(&data).map_err(|_| Error::new(
+                ErrorKind::InvalidInput, "Failed to decode quotes."
+            ))
         }
 
         pub fn save(&self) -> Result<()> {
             try!(create_dir_all(Path::new("data/")));
             let mut f = try!(File::create(Path::new("data/quotes.json")));
-            try!(f.write_all(try!(encode(self).map_err(|e| 
-                Error::new(ErrorKind::InvalidInput, "Failed to decode quotes.",
-                           Some(e.description().to_owned()))
-            )).as_bytes()));
+            try!(f.write_all(try!(encode(self).map_err(|_| Error::new(
+                ErrorKind::InvalidInput, "Failed to decode quotes."
+            ))).as_bytes()));
             f.flush()
         }
 

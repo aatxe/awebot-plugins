@@ -1,4 +1,3 @@
-#![feature(io)]
 extern crate irc;
 extern crate rustc_serialize;
 extern crate time;
@@ -47,7 +46,6 @@ mod data {
     use std::borrow::ToOwned;
     use std::collections::HashMap;
     use std::collections::hash_map::Entry::{Occupied, Vacant};
-    use std::error::Error as StdError;
     use std::fs::{File, create_dir_all};
     use std::io::{Error, ErrorKind, Result};
     use std::io::prelude::*;
@@ -76,19 +74,17 @@ mod data {
             let mut file = try!(File::open(&Path::new("data/messages.json")));
             let mut data = String::new();
             try!(file.read_to_string(&mut data));
-            decode(&data).map_err(|e| 
-                Error::new(ErrorKind::InvalidInput, "Failed to decode messages.", 
-                           Some(e.description().to_owned()))
-            )
+            decode(&data).map_err(|_| Error::new(
+                ErrorKind::InvalidInput, "Failed to decode messages."
+            ))
         }
 
         pub fn save(&self) -> Result<()> {
             try!(create_dir_all(&Path::new("data/")));
             let mut f = try!(File::create(&Path::new("data/messages.json")));
-            f.write_all(&try!(encode(self).map_err(|e| 
-                Error::new(ErrorKind::InvalidInput, "Failed to encode messages.", 
-                           Some(e.description().to_owned()))
-            )).as_bytes())
+            f.write_all(&try!(encode(self).map_err(|_| Error::new(
+                ErrorKind::InvalidInput, "Failed to encode messages."
+            ))).as_bytes())
         }
 
         pub fn add_message(&mut self, target: &str, message: &str, sender: &str) {

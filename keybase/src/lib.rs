@@ -1,4 +1,3 @@
-#![feature(io)]
 extern crate irc;
 extern crate hyper;
 extern crate rustc_serialize;
@@ -61,7 +60,6 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
 
 mod data {
     use std::borrow::ToOwned;
-    use std::error::Error as StdError;
     use std::io::{Error, ErrorKind, Result};
     use rustc_serialize::json::decode;
 
@@ -72,10 +70,9 @@ mod data {
 
     impl LookUp {
         pub fn decode(string: &str) -> Result<LookUp> {
-            decode(string).map_err(|e| 
-                Error::new(ErrorKind::InvalidInput, "Failed to decode keybase results.",
-                           Some(e.description().to_owned()))
-            )
+            decode(string).map_err(|_| Error::new(
+                ErrorKind::InvalidInput, "Failed to decode keybase results."
+            ))
         }
 
         pub fn display(&self) -> String {

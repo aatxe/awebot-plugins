@@ -1,4 +1,3 @@
-#![feature(io)]
 extern crate irc;
 
 use std::io::{BufReader, BufWriter, Result};
