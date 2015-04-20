@@ -27,10 +27,17 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
         let tokens: Vec<_> = msg.split(" ").collect();
         if tokens[0] == "@tell" && tokens.len() > 1 && tokens[1] != server.config().nickname()
         && msg.len() > 7 + tokens[1].len() {
-            let message = &msg[7+tokens[1].len()..];
-            messages.add_message(tokens[1], message, user);
-            let _ = messages.save();
-            try!(server.send_privmsg(resp, &format!("{}: I'll let them know!", user)));
+            if messages.is_recent(user, tokens[1]) {
+                try!(server.send_privmsg(resp, 
+                    &format!("{}: You've sent {} a message too recently! Wait a minute!", user, 
+                             tokens[1])
+                ));
+            } else {
+                let message = &msg[7+tokens[1].len()..];
+                messages.add_message(tokens[1], message, user);
+                let _ = messages.save();
+                try!(server.send_privmsg(resp, &format!("{}: I'll let them know!", user)));
+            }
         } else if tokens[0] == "@tell" && tokens.len() > 1 
                && tokens[1] == server.config().nickname() {
             try!(server.send_privmsg(resp, &format!("{}: I'm right here!", user)));
@@ -85,6 +92,14 @@ mod data {
             f.write_all(&try!(encode(self).map_err(|_| Error::new(
                 ErrorKind::InvalidInput, "Failed to encode messages."
             ))).as_bytes())
+        }
+
+        pub fn is_recent(&self, from: &str, to: &str) -> bool {
+            if let Some(msg) = self.undelivered.get(&to.to_owned()).and_then(|v| v.last()) {
+                &msg.sender[..] == from && (get_time() - msg.time).num_minutes() < 1
+            } else {
+                false
+            }
         }
 
         pub fn add_message(&mut self, target: &str, message: &str, sender: &str) {
