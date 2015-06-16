@@ -21,6 +21,7 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
         } else {
             &chan[..]
         };
+        let tokens: Vec<_> = msg.split(" ").collect();
         if msg.starts_with("@iam ") {
             let me = data::WhoIs::new(user, &msg[5..]);
             let msg = match me.save() {
@@ -28,11 +29,16 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
                 Err(_) => format!("{}: Something went wrong.", user),
             };
             try!(server.send_privmsg(resp, &msg));
-        } else if msg.starts_with("@whois ") {
-            let tokens: Vec<_> = msg.split(" ").collect();
+        } else if tokens[0] == "@whois" {
             let msg = match data::WhoIs::load(tokens[1]) {
                 Ok(whois) => format!("{}: {} is {}", user, whois.nickname, whois.description),
                 Err(_) => format!("{}: I don't know who {} is.", user, tokens[1]),
+            };
+            try!(server.send_privmsg(resp, &msg));
+        } else if tokens[0] == "@whoami" {
+            let msg = match data::WhoIs::load(user) {
+                Ok(whois) => format!("{}: you are {}", user, whois.description),
+                Err(_) => format!("{}: I don't know who you are.", user),
             };
             try!(server.send_privmsg(resp, &msg));
         }
