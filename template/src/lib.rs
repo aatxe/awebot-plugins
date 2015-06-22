@@ -5,12 +5,12 @@ use irc::client::conn::NetStream;
 use irc::client::prelude::*;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>, 
+pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
                    message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()> 
+pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
     where T: IrcRead, U: IrcWrite {
     // TODO: plugin functionality
     Ok(())
@@ -33,8 +33,8 @@ mod test {
             super::process_internal(&server, &message).unwrap();
         }
         let vec = server.conn().writer().to_vec();
-        String::from_utf8(vec).unwrap() 
+        String::from_utf8(vec).unwrap()
     }
-    
+
     // TODO: add tests
 }

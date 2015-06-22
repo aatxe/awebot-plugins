@@ -11,7 +11,7 @@ use irc::client::prelude::*;
 use markov::Chain;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>, 
+pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
                    message: Message) -> Result<()> {
     process_internal(server, &message)
 }

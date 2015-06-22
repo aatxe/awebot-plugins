@@ -8,18 +8,18 @@ use irc::client::prelude::*;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>, 
+pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
                    message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()> 
+pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
     where T: IrcRead, U: IrcWrite {
-    let user = msg.get_source_nickname().unwrap_or(""); 
+    let user = msg.get_source_nickname().unwrap_or("");
     if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
         if msg.starts_with("@ddg ") {
             let search = utf8_percent_encode(&msg[5..], DEFAULT_ENCODE_SET);
-            try!(server.send_privmsg(&chan, &format!("{}: https://duckduckgo.com/?q={}", 
+            try!(server.send_privmsg(&chan, &format!("{}: https://duckduckgo.com/?q={}",
                                                      user, search.replace("%20", "+"))));
         }
     }
@@ -43,18 +43,18 @@ mod test {
             super::process_internal(&server, &message).unwrap();
         }
         let vec = server.conn().writer().to_vec();
-        String::from_utf8(vec).unwrap() 
+        String::from_utf8(vec).unwrap()
     }
 
     #[test]
     fn basic_search() {
         let data = test_helper(":test!test@test PRIVMSG #test :@ddg Apple\r\n");
-        assert_eq!(&data[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=Apple\r\n"); 
+        assert_eq!(&data[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=Apple\r\n");
     }
 
     #[test]
     fn search_with_spaces() {
         let data = test_helper(":test!test@test PRIVMSG #test :@ddg !w Edward Snowden\r\n");
-        assert_eq!(&data[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=!w+Edward+Snowden\r\n"); 
+        assert_eq!(&data[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=!w+Edward+Snowden\r\n");
     }
 }

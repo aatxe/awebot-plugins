@@ -8,12 +8,12 @@ use irc::client::data::AccessLevel::*;
 use irc::client::prelude::*;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>, 
+pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
                    message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()> 
+pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
     where T: IrcRead, U: IrcWrite {
     if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
         if msg.starts_with("@users") {
@@ -47,7 +47,7 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
             };
             let users = server.list_users(&chan).unwrap();
             try!(server.send_privmsg(&chan, &format!("Users: {}", stringify(users))));
-        }   
+        }
     }
     Ok(())
 }
@@ -69,8 +69,8 @@ mod test {
             super::process_internal(&server, &message).unwrap();
         }
         let vec = server.conn().writer().to_vec();
-        String::from_utf8(vec).unwrap() 
+        String::from_utf8(vec).unwrap()
     }
-    
+
     // TODO: add tests
 }

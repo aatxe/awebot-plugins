@@ -8,12 +8,12 @@ use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>, 
+pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
                    message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()> 
+pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
     where T: IrcRead, U: IrcWrite {
     let user = msg.get_source_nickname().unwrap_or("");
     if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
@@ -28,7 +28,7 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
             let quote = &msg[11+tokens[1].len()..];
             quotes.add_quote(quote, tokens[1]);
             let _ = quotes.save();
-            try!(server.send_privmsg(resp, &format!("{}: I'll remember it as #{}.", user, 
+            try!(server.send_privmsg(resp, &format!("{}: I'll remember it as #{}.", user,
                                                     quotes.get_latest_index())));
         } else if tokens[0] == "@quote" {
             let quotes = data::Quotes::load();
@@ -38,7 +38,7 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
                 quotes.get_random_quote()
             };
             match quote {
-                Some(q) => 
+                Some(q) =>
                     try!(server.send_privmsg(resp, &format!("<{}> {}", q.sender, q.message))),
                 None => try!(server.send_privmsg(resp, if tokens.len() > 1 {
                     "There is no such quote."
@@ -139,8 +139,8 @@ mod test {
             super::process_internal(&server, &message).unwrap();
         }
         let vec = server.conn().writer().to_vec();
-        String::from_utf8(vec).unwrap() 
+        String::from_utf8(vec).unwrap()
     }
-    
+
     // TODO: add tests
 }

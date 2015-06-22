@@ -11,14 +11,14 @@ use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>, 
+pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
                    message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()> 
+pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
     where T: IrcRead, U: IrcWrite {
-    println!("!!! WARNING: You have a very dangerous system plugin loaded. !!!"); 
+    println!("!!! WARNING: You have a very dangerous system plugin loaded. !!!");
     let user = msg.get_source_nickname().unwrap_or("");
     if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
         if server.config().is_owner(user) {
@@ -36,7 +36,7 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
                     try!(server.send_privmsg(&chan, &msg));
                 }
             }
-        } 
+        }
     }
     Ok(())
 }
@@ -58,8 +58,8 @@ mod test {
             super::process_internal(&server, &message).unwrap();
         }
         let vec = server.conn().writer().to_vec();
-        String::from_utf8(vec).unwrap() 
+        String::from_utf8(vec).unwrap()
     }
-    
+
     // TODO: add tests
 }

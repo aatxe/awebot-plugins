@@ -11,17 +11,17 @@ use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>, 
+pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
                    message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()> 
+pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
     where T: IrcRead, U: IrcWrite {
     let user = msg.get_source_nickname().unwrap_or("");
     if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
         let tokens: Vec<_> = msg.split(" ").collect();
-        if tokens[0] == "@keybase" && (tokens.len() == 2 || tokens.len() == 3) 
+        if tokens[0] == "@keybase" && (tokens.len() == 2 || tokens.len() == 3)
         && tokens[1].len() > 0 {
             let url = format!("https://keybase.io/_/api/1.0/user/lookup.json?usernames={}&fields={\
                               }", tokens[1], "proofs_summary,public_keys");
@@ -53,7 +53,7 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
             } else {
                 try!(server.send_privmsg(&chan, &format!("{}: Something went wrong!", user)));
             }
-        }  
+        }
     }
     Ok(())
 }
@@ -155,9 +155,9 @@ mod data {
             let len = ret.len() - 1;
             if len > 0 {
                 ret.truncate(len);
-                Some(ret)   
+                Some(ret)
             } else {
-                None   
+                None
             }
         }
     }
@@ -201,7 +201,7 @@ mod test {
             super::process_internal(&server, &message).unwrap();
         }
         let vec = server.conn().writer().to_vec();
-        String::from_utf8(vec).unwrap() 
+        String::from_utf8(vec).unwrap()
     }
 
     #[test]
@@ -209,7 +209,7 @@ mod test {
         let data = test_helper(":test!test@test PRIVMSG #test :@keybase awe\r\n");
         assert_eq!(&data[..], "PRIVMSG #test :test: Keybase: awe Twitter: aatxe GitHub: aatxe \
                             Reddit: aaronweiss74 Coinbase: coinbase/awe Website: deviant-core.net \
-                            Website: pdgn.co Website: aaronweiss.us\r\n"); 
+                            Website: pdgn.co Website: aaronweiss.us\r\n");
     }
 
     #[test]

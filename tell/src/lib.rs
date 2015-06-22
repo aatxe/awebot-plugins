@@ -9,12 +9,12 @@ use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>, 
+pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
                    message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()> 
+pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
     where T: IrcRead, U: IrcWrite {
     let user = msg.get_source_nickname().unwrap_or("");
     if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
@@ -28,8 +28,8 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
         if tokens[0] == "@tell" && tokens.len() > 1 && tokens[1] != server.config().nickname()
         && msg.len() > 7 + tokens[1].len() {
             if messages.is_recent(user, tokens[1]) {
-                try!(server.send_privmsg(resp, 
-                    &format!("{}: You've sent {} a message too recently! Wait a minute!", user, 
+                try!(server.send_privmsg(resp,
+                    &format!("{}: You've sent {} a message too recently! Wait a minute!", user,
                              tokens[1])
                 ));
             } else {
@@ -38,7 +38,7 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
                 let _ = messages.save();
                 try!(server.send_privmsg(resp, &format!("{}: I'll let them know!", user)));
             }
-        } else if tokens[0] == "@tell" && tokens.len() > 1 
+        } else if tokens[0] == "@tell" && tokens.len() > 1
                && tokens[1] == server.config().nickname() {
             try!(server.send_privmsg(resp, &format!("{}: I'm right here!", user)));
         }
@@ -158,10 +158,10 @@ mod data {
             } else if dur.num_minutes() == 1 {
                 "A minute ago".to_owned()
             } else {
-                "Moments ago".to_owned()  
+                "Moments ago".to_owned()
             };
             format!("{}: {}, {} said {}{}", self.target, ago, self.sender, self.message,
-                if self.message.ends_with(".") || self.message.ends_with("!") || 
+                if self.message.ends_with(".") || self.message.ends_with("!") ||
                 self.message.ends_with("?") { "" } else { "." })
         }
     }
@@ -184,8 +184,8 @@ mod test {
             super::process_internal(&server, &message).unwrap();
         }
         let vec = server.conn().writer().to_vec();
-        String::from_utf8(vec).unwrap() 
+        String::from_utf8(vec).unwrap()
     }
-    
+
     // TODO: add tests
 }

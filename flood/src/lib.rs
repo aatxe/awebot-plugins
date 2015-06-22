@@ -6,12 +6,12 @@ use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>, 
+pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
                    message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()> 
+pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
     where T: IrcRead, U: IrcWrite {
     let user = msg.get_source_nickname().unwrap_or("");
     if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
@@ -24,12 +24,12 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
                         if tokens.len() == 3 {
                             try!(server.send_privmsg(target, &format!("@flood ({})", i)));
                         } else {
-                            try!(server.send_privmsg(target, 
+                            try!(server.send_privmsg(target,
                                             &msg[(9 + tokens[1].len() + tokens[2].len())..]));
                         }
                     }
                 } else {
-                    try!(server.send_privmsg(if &chan[..] == server.config().nickname() { user } 
+                    try!(server.send_privmsg(if &chan[..] == server.config().nickname() { user }
                          else { &chan }, &format!("{} is not a number.", tokens[2])));
                 }
             }
@@ -60,7 +60,7 @@ mod test {
             super::process_internal(&server, &message).unwrap();
         }
         let vec = server.conn().writer().to_vec();
-        String::from_utf8(vec).unwrap() 
+        String::from_utf8(vec).unwrap()
     }
     #[test]
     fn flood_default_msg() {
@@ -79,7 +79,7 @@ mod test {
         let data = test_helper(":test!test@test PRIVMSG #test :@flood #test q this is a test\r\n");
         assert_eq!(&data[..], "PRIVMSG #test :q is not a number.\r\n");
     }
-    
+
     #[test]
     fn flood_not_a_number_query() {
         let data = test_helper(":test!test@test PRIVMSG flood :@flood #test q this is a test\r\n");
