@@ -76,7 +76,8 @@ mod data {
         }
 
         pub fn display(&self) -> String {
-            self.them.as_ref().map(|v| v[0].display()).unwrap()
+            self.them.as_ref().map(|v| v[0].display()).unwrap_or(
+                "(Keybase failed to return a result.)".to_owned())
         }
 
         pub fn display_type(&self, kind: &str) -> Option<String> {
