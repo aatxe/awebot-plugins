@@ -1,16 +1,13 @@
 [package]
-
 name = "whois"
 version = "0.0.1"
 authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 
 [lib]
-
 name = "whois"
 crate-type = ["dylib"]
 
 [dependencies.irc]
-
 irc = "*"
 
 [dependencies.rustc-serialize]
