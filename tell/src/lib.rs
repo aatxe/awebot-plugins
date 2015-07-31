@@ -3,27 +3,26 @@ extern crate rustc_serialize;
 extern crate time;
 
 
-use std::io::{BufReader, BufWriter, Result};
-use irc::client::conn::NetStream;
+use std::io::Result;
+use irc::client::server::NetIrcServer;
 use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
-                   message: Message) -> Result<()> {
+pub fn process<'a>(server: &'a NetIrcServer, message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
-    where T: IrcRead, U: IrcWrite {
+pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
+    where T: IrcRead, U: IrcWrite, S: ServerExt<'a, T, U> + Sized {
     let user = msg.get_source_nickname().unwrap_or("");
-    if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
+    if let Ok(PRIVMSG(chan, msg)) = msg.into() {
         let resp = if chan == server.config().nickname() {
             user
         } else {
             &chan[..]
         };
-        let mut messages = data::Messages::load();
+        let mut messages = data::Messages::load(server.config().server());
         let tokens: Vec<_> = msg.split(" ").collect();
         if tokens[0] == "@tell" && tokens.len() > 1 && tokens[1] != server.config().nickname()
         && msg.len() > 7 + tokens[1].len() {
@@ -63,22 +62,24 @@ mod data {
 
     #[derive(RustcEncodable, RustcDecodable)]
     pub struct Messages {
+        server: String,
         undelivered: HashMap<String, Vec<Message>>
     }
 
     impl Messages {
-        pub fn load() -> Messages {
-            if let Ok(messages) = Messages::load_internal() {
+        pub fn load(server: &str) -> Messages {
+            if let Ok(messages) = Messages::load_internal(server) {
                 messages
             } else {
                 Messages {
+                    server: server.to_owned(),
                     undelivered: HashMap::new()
                 }
             }
         }
 
-        fn load_internal() -> Result<Messages> {
-            let mut file = try!(File::open(&Path::new("data/messages.json")));
+        fn load_internal(server: &str) -> Result<Messages> {
+            let mut file = try!(File::open(&Path::new(&format!("data/{}.json", server))));
             let mut data = String::new();
             try!(file.read_to_string(&mut data));
             decode(&data).map_err(|_| Error::new(
@@ -88,7 +89,7 @@ mod data {
 
         pub fn save(&self) -> Result<()> {
             try!(create_dir_all(&Path::new("data/")));
-            let mut f = try!(File::create(&Path::new("data/messages.json")));
+            let mut f = try!(File::create(&Path::new(&format!("data/{}.json", self.server))));
             f.write_all(&try!(encode(self).map_err(|_| Error::new(
                 ErrorKind::InvalidInput, "Failed to encode messages."
             ))).as_bytes())
