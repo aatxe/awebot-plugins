@@ -1,10 +1,10 @@
 extern crate irc;
 extern crate rand;
 
-use std::io::{BufReader, BufWriter, Result};
-use irc::client::conn::NetStream;
+use std::io::Result;
 use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::client::server::NetIrcServer;
 use rand::{thread_rng, Rng};
 
 static MESSAGES: &'static [&'static str] =
@@ -26,15 +26,14 @@ static MESSAGES: &'static [&'static str] =
  ];
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
-                   message: Message) -> Result<()> {
+pub fn process<'a>(server: &'a NetIrcServer, message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
-    where T: IrcRead, U: IrcWrite {
+pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
+    where T: IrcRead, U: IrcWrite, S: ServerExt<'a, T, U> + Sized {
     let user = msg.get_source_nickname().unwrap_or("");
-    if let Ok(PRIVMSG(_, _)) = Command::from_message(msg) {
+    if let Ok(PRIVMSG(_, _)) = msg.into() {
         let mut rng = thread_rng();
         if rng.gen_weighted_bool(1000) {
             try!(server.send_privmsg(user, *rng.choose(MESSAGES).unwrap()));

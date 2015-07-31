@@ -4,9 +4,9 @@ extern crate time;
 
 
 use std::io::Result;
-use irc::client::server::NetIrcServer;
 use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::client::server::NetIrcServer;
 
 #[no_mangle]
 pub fn process<'a>(server: &'a NetIrcServer, message: Message) -> Result<()> {

@@ -1,20 +1,19 @@
 extern crate irc;
 
-use std::io::{BufReader, BufWriter, Result};
-use irc::client::conn::NetStream;
+use std::io::Result;
 use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::client::server::NetIrcServer;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
-                   message: Message) -> Result<()> {
+pub fn process<'a>(server: &'a NetIrcServer, message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
-    where T: IrcRead, U: IrcWrite {
+pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
+    where T: IrcRead, U: IrcWrite, S: ServerExt<'a, T, U> + Sized {
     let user = msg.get_source_nickname().unwrap_or("");
-    if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
+    if let Ok(PRIVMSG(chan, msg)) = msg.into() {
         let tokens: Vec<_> = msg.split(" ").collect();
         if chan != server.config().nickname() { return Ok(()) }
         if server.config().is_owner(user) {

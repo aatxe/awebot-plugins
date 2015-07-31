@@ -1,22 +1,21 @@
 extern crate irc;
 extern crate url;
 
-use std::io::{BufReader, BufWriter, Result};
-use irc::client::conn::NetStream;
+use std::io::Result;
 use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::client::server::NetIrcServer;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
-                   message: Message) -> Result<()> {
+pub fn process<'a>(server: &'a NetIrcServer, message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
-    where T: IrcRead, U: IrcWrite {
+pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
+    where T: IrcRead, U: IrcWrite, S: ServerExt<'a, T, U> + Sized {
     let user = msg.get_source_nickname().unwrap_or("");
-    if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
+    if let Ok(PRIVMSG(chan, msg)) = msg.into() {
         if msg.starts_with("@ddg ") {
             let search = utf8_percent_encode(&msg[5..], DEFAULT_ENCODE_SET);
             try!(server.send_privmsg(&chan, &format!("{}: https://duckduckgo.com/?q={}",

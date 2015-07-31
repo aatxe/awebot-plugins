@@ -2,30 +2,29 @@ extern crate irc;
 extern crate hyper;
 extern crate rustc_serialize;
 
-use std::io::{BufReader, BufWriter, Result};
+use std::io::Result;
 use std::io::prelude::*;
 use hyper::Url;
 use hyper::client::Client;
-use irc::client::conn::NetStream;
 use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::client::server::NetIrcServer;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
-                   message: Message) -> Result<()> {
+pub fn process<'a>(server: &'a NetIrcServer, message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
-    where T: IrcRead, U: IrcWrite {
+pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
+    where T: IrcRead, U: IrcWrite, S: ServerExt<'a, T, U> + Sized {
     let user = msg.get_source_nickname().unwrap_or("");
-    if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
+    if let Ok(PRIVMSG(chan, msg)) = msg.into() {
         let tokens: Vec<_> = msg.split(" ").collect();
         if tokens[0] == "@keybase" && (tokens.len() == 2 || tokens.len() == 3)
         && tokens[1].len() > 0 {
             let url = format!("https://keybase.io/_/api/1.0/user/lookup.json?usernames={}&fields={\
                               }", tokens[1], "proofs_summary,public_keys");
-            let mut client = Client::new();
+            let client = Client::new();
             let mut result = client.get(Url::parse(&url).unwrap()).send().unwrap();
             let mut res = String::new();
             try!(result.read_to_string(&mut res));

@@ -1,26 +1,25 @@
 extern crate irc;
 
-use std::io::{BufReader, BufWriter, Result};
-use irc::client::conn::NetStream;
+use std::io::Result;
 use irc::client::data::User;
-use irc::client::data::Command::PRIVMSG;
 use irc::client::data::AccessLevel::*;
+use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::client::server::NetIrcServer;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a ServerExt<'a, BufReader<NetStream>, BufWriter<NetStream>>,
-                   message: Message) -> Result<()> {
+pub fn process<'a>(server: &'a NetIrcServer, message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message) -> Result<()>
-    where T: IrcRead, U: IrcWrite {
-    if let Ok(PRIVMSG(chan, msg)) = Command::from_message(msg) {
+pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
+    where T: IrcRead, U: IrcWrite, S: ServerExt<'a, T, U> + Sized {
+    if let Ok(PRIVMSG(chan, msg)) = msg.into() {
         if msg.starts_with("@users") {
             let stringify = |users: Vec<User>| -> String {
                 let mut ret = String::new();
                 for user in users.into_iter() {
-                    if user.get_name().len() == 0 { continue }
+                    if user.get_nickname().len() == 0 { continue }
                     for level in user.access_levels().iter() {
                         ret.push_str(match level {
                             &Owner  => "~",
@@ -31,7 +30,7 @@ pub fn process_internal<'a, T, U>(server: &'a ServerExt<'a, T, U>, msg: &Message
                             _      => "",
                         });
                     }
-                    ret.push_str(user.get_name());
+                    ret.push_str(user.get_nickname());
                     ret.push_str(", ");
                     if ret.len() > 300 {
                         ret.push_str("\r\n");
