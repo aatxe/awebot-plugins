@@ -23,14 +23,14 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
         };
         let tokens: Vec<_> = msg.split(" ").collect();
         if tokens[0] == "@addquote" && tokens.len() > 1 && msg.len() > 10 + tokens[1].len() {
-            let mut quotes = data::Quotes::load();
+            let mut quotes = data::Quotes::load(server.config().server());
             let quote = &msg[11+tokens[1].len()..];
             quotes.add_quote(quote, tokens[1]);
             let _ = quotes.save();
             try!(server.send_privmsg(resp, &format!("{}: I'll remember it as #{}.", user,
                                                     quotes.get_latest_index())));
         } else if tokens[0] == "@quote" {
-            let quotes = data::Quotes::load();
+            let quotes = data::Quotes::load(server.config().server());
             let quote = if tokens.len() > 1 {
                 tokens[1].parse().ok().and_then(|i| quotes.get_quote(i))
             } else {
@@ -61,20 +61,21 @@ mod data {
 
     #[derive(RustcEncodable, RustcDecodable)]
     pub struct Quotes {
+        server: String,
         quotes: Vec<Quote>
     }
 
     impl Quotes {
-        pub fn load() -> Quotes {
-            if let Ok(quotes) = Quotes::load_internal() {
+        pub fn load(server: &str) -> Quotes {
+            if let Ok(quotes) = Quotes::load_internal(server) {
                 quotes
             } else {
-                Quotes { quotes: Vec::new() }
+                Quotes { server: server.to_owned(), quotes: Vec::new() }
             }
         }
 
-        fn load_internal() -> Result<Quotes> {
-            let mut file = try!(File::open(&Path::new("data/quotes.json")));
+        fn load_internal(server: &str) -> Result<Quotes> {
+            let mut file = try!(File::open(&Path::new(&format!("data/{}.json", server))));
             let mut data = String::new();
             try!(file.read_to_string(&mut data));
             decode(&data).map_err(|_| Error::new(
@@ -84,7 +85,7 @@ mod data {
 
         pub fn save(&self) -> Result<()> {
             try!(create_dir_all(Path::new("data/")));
-            let mut f = try!(File::create(Path::new("data/quotes.json")));
+            let mut f = try!(File::create(Path::new(&format!("data/{}.json", self.server))));
             try!(f.write_all(try!(encode(self).map_err(|_| Error::new(
                 ErrorKind::InvalidInput, "Failed to decode quotes."
             ))).as_bytes()));
