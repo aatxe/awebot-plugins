@@ -8,7 +8,7 @@ static mut count: usize =  0;
 static mut flag: bool = false;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a NetIrcServer, message: Message) -> Result<()> {
+pub fn process(server: &NetIrcServer, message: Message) -> Result<()> {
     if let Some(resp) = Response::from_message(&message) {
         if resp == Response::ERR_NICKNAMEINUSE {
             unsafe { flag = true }

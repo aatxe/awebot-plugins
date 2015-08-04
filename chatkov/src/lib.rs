@@ -11,7 +11,7 @@ use irc::client::server::NetIrcServer;
 use markov::Chain;
 
 #[no_mangle]
-pub fn process<'a>(server: &'a NetIrcServer, message: Message) -> Result<()> {
+pub fn process(server: &NetIrcServer, message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
