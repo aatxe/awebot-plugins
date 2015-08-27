@@ -29,9 +29,13 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
             };
             try!(server.send_privmsg(resp, &msg));
         } else if tokens[0] == "@whois" {
-            let msg = match data::WhoIs::load(tokens[1]) {
-                Ok(whois) => format!("{}: {} is {}", user, whois.nickname, whois.description),
-                Err(_) => format!("{}: I don't know who {} is.", user, tokens[1]),
+            let msg = if tokens.len() > 1 {
+                match data::WhoIs::load(tokens[1]) {
+                    Ok(whois) => format!("{}: {} is {}", user, whois.nickname, whois.description),
+                    Err(_) => format!("{}: I don't know who {} is.", user, tokens[1]),
+                }
+            } else {
+                format!("{}: Who is who? I need a name!", user)
             };
             try!(server.send_privmsg(resp, &msg));
         } else if tokens[0] == "@whoami" {
