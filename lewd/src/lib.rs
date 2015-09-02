@@ -26,7 +26,7 @@ static MESSAGES: &'static [&'static str] =
  ];
 
 #[no_mangle]
-pub fn process(server: &NetIrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &NetIrcServer, message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 

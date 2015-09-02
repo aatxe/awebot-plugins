@@ -7,7 +7,7 @@ use irc::client::prelude::*;
 use irc::client::server::NetIrcServer;
 
 #[no_mangle]
-pub fn process(server: &NetIrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &NetIrcServer, message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
