@@ -19,7 +19,7 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
     where T: IrcRead, U: IrcWrite, S: ServerExt<'a, T, U> + Sized {
     let user = msg.get_source_nickname().unwrap_or("");
     if let Ok(PRIVMSG(chan, msg)) = msg.into() {
-        let tokens: Vec<_> = msg.split(" ").collect();
+        let tokens: Vec<_> = msg.trim_right().split(" ").collect();
         if tokens[0] == "@keybase" && (tokens.len() == 2 || tokens.len() == 3)
         && tokens[1].len() > 0 {
             let url = format!("https://keybase.io/_/api/1.0/user/lookup.json?usernames={}&fields={\

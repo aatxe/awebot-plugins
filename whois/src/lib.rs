@@ -20,7 +20,7 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
         } else {
             &chan[..]
         };
-        let tokens: Vec<_> = msg.split(" ").collect();
+        let tokens: Vec<_> = msg.trim_right().split(" ").collect();
         if msg.starts_with("@iam ") {
             let me = data::WhoIs::new(user, &msg[5..]);
             let msg = match me.save() {

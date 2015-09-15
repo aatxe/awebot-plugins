@@ -23,7 +23,7 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
             &chan[..]
         };
         let mut messages = data::Messages::load(server.config().server());
-        let tokens: Vec<_> = msg.split(" ").collect();
+        let tokens: Vec<_> = msg.trim_right().split(" ").collect();
         if tokens[0] == "@tell" && tokens.len() > 1 && tokens[1] != server.config().nickname()
         && msg.len() > 7 + tokens[1].len() {
             if messages.is_recent(user, tokens[1]) {

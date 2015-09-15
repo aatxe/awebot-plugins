@@ -15,7 +15,7 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
     let user = msg.get_source_nickname().unwrap_or("");
     if let Ok(PRIVMSG(chan, msg)) = msg.into() {
         if server.config().is_owner(user) {
-            let tokens: Vec<_> = msg.split(" ").collect();
+            let tokens: Vec<_> = msg.trim_right().split(" ").collect();
             if tokens.len() >= 3 && tokens[0] == "@flood" {
                 let target = tokens[1];
                 if let Ok(n) = tokens[2].parse() {

@@ -21,7 +21,7 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
         } else {
             &chan[..]
         };
-        let tokens: Vec<_> = msg.split(" ").collect();
+        let tokens: Vec<_> = msg.trim_right().split(" ").collect();
         if tokens[0] == "@addquote" && tokens.len() > 1 && msg.len() > 10 + tokens[1].len() {
             let mut quotes = data::Quotes::load(server.config().server());
             let quote = &msg[11+tokens[1].len()..];
