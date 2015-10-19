@@ -96,7 +96,7 @@ mod data {
         }
 
         pub fn is_recent(&self, from: &str, to: &str) -> bool {
-            if let Some(msg) = self.undelivered.get(&to.to_owned()).and_then(|v| v.last()) {
+            if let Some(msg) = self.undelivered.get(&to.to_lowercase()).and_then(|v| v.last()) {
                 &msg.sender[..] == from && (get_time() - msg.time).num_minutes() < 1
             } else {
                 false
@@ -104,14 +104,14 @@ mod data {
         }
 
         pub fn add_message(&mut self, target: &str, message: &str, sender: &str) {
-            match self.undelivered.entry(target.to_owned()) {
+            match self.undelivered.entry(target.to_lowercase()) {
                 Occupied(mut e) => e.get_mut().push(Message::new(target, message, sender)),
                 Vacant(e) => { e.insert(vec![Message::new(target, message, sender)]); },
             }
         }
 
         pub fn get_messages(&mut self, user: &str) -> Vec<Message> {
-            let ret = match self.undelivered.remove(user) {
+            let ret = match self.undelivered.remove(user.to_lowercase()) {
                 Some(v) => v,
                 None => vec![],
             };
