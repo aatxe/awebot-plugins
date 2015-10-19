@@ -70,7 +70,7 @@ mod data {
 
         pub fn load(nickname: &str) -> Result<WhoIs> {
             let mut path = "data/whois/".to_owned();
-            path.push_str(nickname.to_lowercase());
+            path.push_str(&nickname.to_lowercase());
             path.push_str(".json");
             let mut file = try!(File::open(Path::new(&path)));
             let mut data = String::new();
