@@ -111,7 +111,7 @@ mod data {
         }
 
         pub fn get_messages(&mut self, user: &str) -> Vec<Message> {
-            let ret = match self.undelivered.remove(user.to_lowercase()) {
+            let ret = match self.undelivered.remove(&user.to_lowercase()) {
                 Some(v) => v,
                 None => vec![],
             };
