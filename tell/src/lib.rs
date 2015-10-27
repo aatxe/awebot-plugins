@@ -24,8 +24,8 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
         };
         let mut messages = data::Messages::load(server.config().server());
         let tokens: Vec<_> = msg.trim_right().split(" ").collect();
-        if tokens[0] == "@tell" && tokens.len() > 1 && tokens[1] != server.config().nickname()
-        && msg.len() > 7 + tokens[1].len() {
+        if (tokens[0] == "@tell" || tokens[0] == "@ptell") && tokens.len() > 1
+            && tokens[1] != server.config().nickname() && msg.len() > 7 + tokens[1].len() {
             if messages.is_recent(user, tokens[1]) {
                 try!(server.send_privmsg(resp,
                     &format!("{}: You've sent {} a message too recently! Wait a minute!", user,
@@ -33,7 +33,11 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
                 ));
             } else {
                 let message = &msg[7+tokens[1].len()..];
-                messages.add_message(tokens[1], message, user);
+                match tokens[0] {
+                    "@tell" => messages.add_message(tokens[1], message, user),
+                    "@ptell" => messages.add_private_message(tokens[1], message, user),
+                    _ => unreachable!()
+                }
                 let _ = messages.save();
                 try!(server.send_privmsg(resp, &format!("{}: I'll let them know!", user)));
             }
@@ -42,7 +46,11 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
             try!(server.send_privmsg(resp, &format!("{}: I'm right here!", user)));
         }
         for msg in messages.get_messages(user).iter() {
-            try!(server.send_privmsg(resp, &msg.to_string()));
+            if msg.is_private() {
+                try!(server.send_privmsg(user, &msg.to_string()));
+            } else {
+                try!(server.send_privmsg(resp, &msg.to_string()));
+            }
         }
     }
     Ok(())
@@ -63,7 +71,7 @@ mod data {
     #[derive(RustcEncodable, RustcDecodable)]
     pub struct Messages {
         server: String,
-        undelivered: HashMap<String, Vec<Message>>
+        undelivered: HashMap<String, Vec<Message>>,
     }
 
     impl Messages {
@@ -110,6 +118,13 @@ mod data {
             }
         }
 
+        pub fn add_private_message(&mut self, target: &str, message: &str, sender: &str) {
+            match self.undelivered.entry(target.to_lowercase()) {
+                Occupied(mut e) => e.get_mut().push(Message::new_private(target, message, sender)),
+                Vacant(e) => { e.insert(vec![Message::new_private(target, message, sender)]); },
+            }
+        }
+
         pub fn get_messages(&mut self, user: &str) -> Vec<Message> {
             let ret = match self.undelivered.remove(&user.to_lowercase()) {
                 Some(v) => v,
@@ -126,6 +141,7 @@ mod data {
         sender: String,
         message: String,
         time: Timespec,
+        private: bool,
     }
 
     impl Message {
@@ -135,7 +151,22 @@ mod data {
                 sender: sender.to_owned(),
                 message: message.to_owned(),
                 time: get_time(),
+                private: false,
             }
+        }
+
+        pub fn new_private(target: &str, message: &str, sender: &str) -> Message {
+            Message {
+                target: target.to_owned(),
+                sender: sender.to_owned(),
+                message: message.to_owned(),
+                time: get_time(),
+                private: true,
+            }
+        }
+
+        pub fn is_private(&self) -> bool {
+            self.private
         }
     }
 
