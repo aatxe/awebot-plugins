@@ -23,6 +23,13 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
             &chan[..]
         };
         let mut messages = data::Messages::load(server.config().server());
+        for msg in messages.get_messages(user).iter() {
+            if msg.is_private() {
+                try!(server.send_privmsg(user, &msg.to_string()));
+            } else {
+                try!(server.send_privmsg(resp, &msg.to_string()));
+            }
+        }
         let tokens: Vec<_> = msg.trim_right().split(" ").collect();
         if (tokens[0] == "@tell" || tokens[0] == "@ptell") && tokens.len() > 1
             && tokens[1] != server.config().nickname() && msg.len() > 7 + tokens[1].len() {
@@ -44,13 +51,6 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
         } else if tokens[0] == "@tell" && tokens.len() > 1
                && tokens[1] == server.config().nickname() {
             try!(server.send_privmsg(resp, &format!("{}: I'm right here!", user)));
-        }
-        for msg in messages.get_messages(user).iter() {
-            if msg.is_private() {
-                try!(server.send_privmsg(user, &msg.to_string()));
-            } else {
-                try!(server.send_privmsg(resp, &msg.to_string()));
-            }
         }
     }
     Ok(())
