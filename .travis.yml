@@ -26,6 +26,8 @@ script:
   - cargo test --verbose
   - cd ../tell
   - cargo test --verbose
+  - cd ../timefor
+  - cargo test --verbose
   - cd ../users
   - cargo test --verbose
   - cd ../whois
