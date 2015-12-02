@@ -28,7 +28,7 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
                 Err(_) => format!("{}: Something went wrong.", user),
             };
             try!(server.send_privmsg(resp, &msg));
-        } else if tokens[0] == "@whois" {
+        } else if tokens[0] == "@whois" || tokens[0] == "@whodat" {
             let msg = if tokens.len() > 1 {
                 match data::WhoIs::load(tokens[1]) {
                     Ok(whois) => format!("{}: {} is {}", user, whois.nickname, whois.description),
