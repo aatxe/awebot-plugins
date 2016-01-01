@@ -5,6 +5,7 @@ use std::io::Result;
 use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
 use irc::client::server::NetIrcServer;
+use url::Url;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 #[no_mangle]
@@ -20,9 +21,30 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
             let search = utf8_percent_encode(&msg[5..], DEFAULT_ENCODE_SET);
             try!(server.send_privmsg(&chan, &format!("{}: https://duckduckgo.com/?q={}",
                                                      user, search.replace("%20", "+"))));
+        } else if msg.contains("http://") || msg.contains("https://") {
+            for url in find_urls(&msg).iter() {
+                if let Some("google.com") = url.domain() {
+                    if let Some(pairs) = url.query_pairs() {
+                        if let Some(tup) = pairs.iter().find(|tup| &tup.0[..] == "q") {
+                            try!(server.send_privmsg(&chan,
+                                 &format!("{}: https://duckduckgo.com/?q={}", user, tup.1)))
+                        }
+                    }
+                }
+            }
         }
     }
     Ok(())
+}
+
+pub fn tokenize(msg: &str) -> Vec<&str> {
+    msg.split(' ').map(|s| s.trim_matches(
+        |c| ['(', ')', '{', '}', '[', ']', '<', '>', '.', '!', '?', ','].contains(&c)
+    )).collect()
+}
+
+pub fn find_urls(msg: &str) -> Vec<Url> {
+    tokenize(msg).iter().map(|s| Url::parse(s)).filter(|r| r.is_ok()).map(|r| r.unwrap()).collect()
 }
 
 #[cfg(test)]
@@ -31,6 +53,7 @@ mod test {
     use std::io::Cursor;
     use irc::client::conn::Connection;
     use irc::client::prelude::*;
+    use url::Url;
 
     fn test_helper(input: &str) -> String {
         let server = IrcServer::from_connection(Default::default(), Connection::new(
@@ -55,5 +78,27 @@ mod test {
     fn search_with_spaces() {
         let data = test_helper(":test!test@test PRIVMSG #test :@ddg !w Edward Snowden\r\n");
         assert_eq!(&data[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=!w+Edward+Snowden\r\n");
+    }
+
+    #[test]
+    fn tokenize() {
+        assert_eq!(super::tokenize("this is a test."), vec!("this", "is", "a", "test"));
+        assert_eq!(super::tokenize("this is (a test)."), vec!("this", "is", "a", "test"));
+        assert_eq!(super::tokenize("<<this is a [complicated] test, I suppose."),
+                   vec!("this", "is", "a", "complicated", "test", "I", "suppose"));
+    }
+
+    #[test]
+    fn find_urls() {
+        assert_eq!(super::find_urls("this is http://test.com."), vec!(Url::parse("http://test.com").unwrap()));
+        assert_eq!(super::find_urls("this is another (http://test.com/)."), vec!(Url::parse("http://test.com").unwrap()));
+    }
+
+    #[test]
+    fn correct_google() {
+        let data = test_helper(":test!test@test PRIVMSG #test :http://google.com/?q=test\r\n");
+        assert_eq!(&data[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=test\r\n");
+        let data2 = test_helper(":test!test@test PRIVMSG #test :Some text http://google.com/?q=test. Blah.\r\n");
+        assert_eq!(&data2[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=test\r\n");
     }
 }
