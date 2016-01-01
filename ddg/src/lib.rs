@@ -21,7 +21,7 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
             let search = utf8_percent_encode(&msg[5..], DEFAULT_ENCODE_SET);
             try!(server.send_privmsg(&chan, &format!("{}: https://duckduckgo.com/?q={}",
                                                      user, search.replace("%20", "+"))));
-        } else if msg.contains("http://") || msg.contains("https://") {
+        } else if msg.contains("google.com") {
             for url in find_urls(&msg).into_iter() {
                 if url.domain().is_some() && url.domain().unwrap().ends_with("google.com") {
                     let frag = url.clone().fragment.unwrap_or_default();
