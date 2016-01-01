@@ -22,12 +22,23 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
             try!(server.send_privmsg(&chan, &format!("{}: https://duckduckgo.com/?q={}",
                                                      user, search.replace("%20", "+"))));
         } else if msg.contains("http://") || msg.contains("https://") {
-            for url in find_urls(&msg).iter() {
-                if let Some("google.com") = url.domain() {
-                    if let Some(pairs) = url.query_pairs() {
+            for url in find_urls(&msg).into_iter() {
+                if url.domain().is_some() && url.domain().unwrap().ends_with("google.com") {
+                    let frag = url.clone().fragment.unwrap_or_default();
+                    if frag.contains("q=") {
+                        let item = match frag.find("q=") {
+                            Some(start) => match frag.find("&") {
+                                Some(end) => &frag[start+2..end],
+                                None => &frag[start+2..],
+                            },
+                            None => ""
+                        };
+                        try!(server.send_privmsg(&chan,
+                                 &format!("{}: https://duckduckgo.com/?q={}", user, item.replace(" ", "+"))))
+                    } else if let Some(pairs) = url.query_pairs() {
                         if let Some(tup) = pairs.iter().find(|tup| &tup.0[..] == "q") {
                             try!(server.send_privmsg(&chan,
-                                 &format!("{}: https://duckduckgo.com/?q={}", user, tup.1)))
+                                 &format!("{}: https://duckduckgo.com/?q={}", user, tup.1.replace(" ", "+"))))
                         }
                     }
                 }
@@ -100,5 +111,11 @@ mod test {
         assert_eq!(&data[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=test\r\n");
         let data2 = test_helper(":test!test@test PRIVMSG #test :Some text http://google.com/?q=test. Blah.\r\n");
         assert_eq!(&data2[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=test\r\n");
+        let data3 = test_helper(":test!test@test PRIVMSG #test :https://www.google.com/?q=test\r\n");
+        assert_eq!(&data3[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=test\r\n");
+        let data4 = test_helper(":test!test@test PRIVMSG #test :https://www.google.com/?q=with+space\r\n");
+        assert_eq!(&data4[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=with+space\r\n");
+        let data5 = test_helper(":test!test@test PRIVMSG #test :https://www.google.com/#q=with+space\r\n");
+        assert_eq!(&data5[..], "PRIVMSG #test :test: https://duckduckgo.com/?q=with+space\r\n");
     }
 }
