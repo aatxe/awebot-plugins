@@ -10,6 +10,8 @@ script:
   - cargo test --verbose
   - cd ../flood
   - cargo test --verbose
+  - cd ../invitation
+  - cargo test --verbose
   - cd ../keybase
   - cargo test --verbose
   - cd ../lewd
