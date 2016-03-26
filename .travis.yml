@@ -1,5 +1,5 @@
 language: rust
-rust: nightly
+rust: stable
 sudo: false
 script:
   - cd chatkov 
@@ -21,8 +21,6 @@ script:
   - cd ../quote
   - cargo test --verbose
   - cd ../reclaim
-  - cargo test --verbose
-  - cd ../sys
   - cargo test --verbose
   - cd ../tell
   - cargo test --verbose
