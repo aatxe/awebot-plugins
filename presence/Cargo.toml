@@ -7,5 +7,5 @@ authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 name = "presence"
 crate-type = ["dylib"]
 
-[dependencies.irc]
+[dependencies]
 irc = "*"

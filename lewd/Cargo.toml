@@ -7,8 +7,6 @@ authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 name = "lewd"
 crate-type = ["dylib"]
 
-[dependencies.irc]
+[dependencies]
 irc = "*"
-
-[dependencies.rand]
 rand = "*"

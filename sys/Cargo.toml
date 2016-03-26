@@ -7,11 +7,7 @@ authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 name = "sys"
 crate-type = ["dylib"]
 
-[dependencies.irc]
+[dependencies]
 irc = "*"
-
-[dependencies.regex]
 regex = "*"
-
-[dependencies.regex_macros]
 regex_macros = "*"

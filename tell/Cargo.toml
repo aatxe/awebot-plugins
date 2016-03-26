@@ -8,11 +8,11 @@ name = "tell"
 crate-type = ["dylib"]
 
 [dependencies.irc]
-irc = "*"
+version = "*"
 
 [dependencies.rustc-serialize]
-rustc-serialize = "*"
+version = "*"
 
 [dependencies.time]
-time = "*"
+version = "*"
 features = ["rustc-serialize"]

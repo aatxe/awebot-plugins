@@ -7,11 +7,7 @@ authors = ["angelsl <angelsl@users.noreply.github.com>"]
 name = "timefor"
 crate-type = ["dylib"]
 
-[dependencies.irc]
+[dependencies]
 irc = "*"
-
-[dependencies.rustc-serialize]
 rustc-serialize = "*"
-
-[dependencies.chrono]
 chrono = ">= 0.2.17"

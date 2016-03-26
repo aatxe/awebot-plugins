@@ -7,6 +7,6 @@ authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 name = "reclaim"
 crate-type = ["dylib"]
 
-[dependencies.irc]
+[dependencies]
 irc = "*"
 

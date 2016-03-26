@@ -7,9 +7,7 @@ authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 name = "chatkov"
 crate-type = ["dylib"]
 
-[dependencies.irc]
+[dependencies]
 irc = "*"
-
-[dependencies.markov]
 markov = "*"
 

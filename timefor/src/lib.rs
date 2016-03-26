@@ -5,19 +5,16 @@ extern crate rustc_serialize;
 use std::io::Result;
 use irc::client::prelude::*;
 use irc::client::data::Command::PRIVMSG;
-use irc::client::server::NetIrcServer;
 
 #[no_mangle]
-pub extern fn process(server: &NetIrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
-    where T: IrcRead, U: IrcWrite, S: ServerExt<'a, T, U> + Sized {
-    let user = msg.get_source_nickname().unwrap_or("");
-    let msg = msg.into();
+pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+    let user = msg.source_nickname().unwrap_or("");
     println!("{:?}", msg);
-    if let Ok(PRIVMSG(chan, msg)) = msg {
+    if let PRIVMSG(ref chan, ref msg) = msg.command {
         let replyto = if chan == server.config().nickname() {
             user
         } else {
@@ -40,7 +37,7 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
             }
         } else if let Some(who) = msg.splitn(2, "@timefor ").nth(1) {
             let response = match data::TzOf::load(user) {
-                Ok(tzof) => 
+                Ok(tzof) =>
                     format!("{}: It is {} where {} is.", user, tzof.time_now().to_rfc2822(), who),
                 Err(_) =>
                     format!("{}: I don't know {}'s timezone.", user, who)
@@ -126,23 +123,22 @@ mod data {
 #[cfg(test)]
 mod test {
     use std::default::Default;
-    use std::io::Cursor;
-    use irc::client::conn::Connection;
+    use irc::client::conn::MockConnection;
     use irc::client::prelude::*;
     use ::data;
     use chrono::offset::utc::UTC;
 
     fn test_helper(input: &str) -> String {
-        let server = IrcServer::from_connection(Config { nickname: Some("bot".to_owned()), ..Default::default() }, Connection::new(
-            Cursor::new(input.as_bytes().to_vec()), Vec::new()
-        ));
+        let server = IrcServer::from_connection(Config {
+            nickname: Some("bot".to_owned()),
+            .. Default::default()
+        }, MockConnection::new(input));
         for message in server.iter() {
             let message = message.unwrap();
             println!("{:?}", message);
             super::process_internal(&server, &message).unwrap();
         }
-        let vec = server.conn().writer().to_vec();
-        String::from_utf8(vec).unwrap()
+        server.conn().written(server.config().encoding()).unwrap()
     }
 
     #[test]

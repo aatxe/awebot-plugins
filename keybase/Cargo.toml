@@ -7,11 +7,7 @@ authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 name = "keybase"
 crate-type = ["dylib"]
 
-[dependencies.irc]
+[dependencies]
 irc = "*"
-
-[dependencies.hyper]
 hyper = "*"
-
-[dependencies.rustc-serialize]
 rustc-serialize = "*"

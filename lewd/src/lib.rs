@@ -4,7 +4,6 @@ extern crate rand;
 use std::io::Result;
 use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
-use irc::client::server::NetIrcServer;
 use rand::{thread_rng, Rng};
 
 static MESSAGES: &'static [&'static str] =
@@ -26,14 +25,13 @@ static MESSAGES: &'static [&'static str] =
  ];
 
 #[no_mangle]
-pub extern fn process(server: &NetIrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
-    where T: IrcRead, U: IrcWrite, S: ServerExt<'a, T, U> + Sized {
-    let user = msg.get_source_nickname().unwrap_or("");
-    if let Ok(PRIVMSG(_, _)) = msg.into() {
+pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+    let user = msg.source_nickname().unwrap_or("");
+    if let PRIVMSG(_, _) = msg.command {
         let mut rng = thread_rng();
         if rng.gen_weighted_bool(1000) {
             try!(server.send_privmsg(user, *rng.choose(MESSAGES).unwrap()));
@@ -45,21 +43,17 @@ pub fn process_internal<'a, S, T, U>(server: &'a S, msg: &Message) -> Result<()>
 #[cfg(test)]
 mod test {
     use std::default::Default;
-    use std::io::Cursor;
-    use irc::client::conn::Connection;
+    use irc::client::conn::MockConnection;
     use irc::client::prelude::*;
 
     fn test_helper(input: &str) -> String {
-        let server = IrcServer::from_connection(Default::default(), Connection::new(
-            Cursor::new(input.as_bytes().to_vec()), Vec::new()
-        ));
+        let server = IrcServer::from_connection(Default::default(), MockConnection::new(input));
         for message in server.iter() {
             let message = message.unwrap();
             println!("{:?}", message);
             super::process_internal(&server, &message).unwrap();
         }
-        let vec = server.conn().writer().to_vec();
-        String::from_utf8(vec).unwrap()
+        server.conn().written(server.config().encoding()).unwrap()
     }
 
     #[test]
