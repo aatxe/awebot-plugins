@@ -1,0 +1,26 @@
+[package]
+name = "awebot-plugins"
+version = "0.1.0"
+authors = ["Aaron Weiss <awe@pdgn.co>"]
+
+[lib]
+name = "empty"
+path = "plugins.rs"
+
+[dependencies]
+irc = "0.12"
+choose = { path = "choose" } 
+ddg = { path = "ddg" }
+flood = { path = "flood" }
+invitation = { path = "invitation" }
+keybase = { path = "keybase" }
+lewd = { path = "lewd" }
+presence = { path = "presence" }
+puppet = { path = "puppet" }
+quote = { path = "quote" }
+reclaim = { path = "reclaim" }
+snake = { path = "snake" }
+sys = { path = "sys" }
+tell = { path = "tell" }
+
+[workspace]
