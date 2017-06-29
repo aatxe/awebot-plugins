@@ -1,16 +1,16 @@
 extern crate irc;
 extern crate rustc_serialize;
 
-use std::io::Result;
-use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::error;
+use irc::error::Command::PRIVMSG;
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     let user = msg.source_nickname().unwrap_or("");
     if let PRIVMSG(ref chan, ref msg) = msg.command {
         let resp = if chan == server.config().nickname() {
@@ -25,7 +25,7 @@ pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: Ser
                 Ok(_) => format!("{}: Got it!", user),
                 Err(_) => format!("{}: Something went wrong.", user),
             };
-            try!(server.send_privmsg(resp, &msg));
+            server.send_privmsg(resp, &msg)?;
         } else if tokens[0] == "@whois" || tokens[0] == "@whodat" {
             let msg = if tokens.len() > 1 {
                 match data::WhoIs::load(tokens[1]) {
@@ -35,13 +35,13 @@ pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: Ser
             } else {
                 format!("{}: Who is who? I need a name!", user)
             };
-            try!(server.send_privmsg(resp, &msg));
+            server.send_privmsg(resp, &msg)?;
         } else if tokens[0] == "@whoami" {
             let msg = match data::WhoIs::load(user) {
                 Ok(whois) => format!("{}: you are {}", user, whois.description),
                 Err(_) => format!("{}: I don't know who you are.", user),
             };
-            try!(server.send_privmsg(resp, &msg));
+            server.send_privmsg(resp, &msg)?;
         }
     }
     Ok(())

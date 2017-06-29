@@ -1,28 +1,28 @@
 extern crate irc;
 extern crate url;
 
-use std::io::Result;
-use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::error;
+use irc::proto::Command::PRIVMSG;
 use url::Url;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
-    process_internal(server, &message)
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
+    process_internal(server, message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     let user = msg.source_nickname().unwrap_or("");
     if let PRIVMSG(ref chan, ref msg) = msg.command {
-        if msg.starts_with("@ddg ") {
-            let search = utf8_percent_encode(&msg[5..], DEFAULT_ENCODE_SET);
+        if msg.starts_with("@ddg ") || msg.starts_with("@search ") {
+            let search = utf8_percent_encode(&msg[5..], DEFAULT_ENCODE_SET).to_string();
             try!(server.send_privmsg(&chan, &format!("{}: https://duckduckgo.com/?q={}",
                                                      user, search.replace("%20", "+"))));
         } else if msg.contains("google.com") {
             for url in find_urls(&msg).into_iter() {
                 if url.domain().is_some() && url.domain().unwrap().ends_with("google.com") {
-                    let frag = url.clone().fragment.unwrap_or_default();
+                    let frag = url.fragment().unwrap_or_default().to_owned();
                     if frag.contains("q=") {
                         let item = match frag.find("q=") {
                             Some(start) => match frag.find("&") {
@@ -33,8 +33,9 @@ pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: Ser
                         };
                         try!(server.send_privmsg(&chan,
                                  &format!("{}: https://duckduckgo.com/?q={}", user, item.replace(" ", "+"))))
-                    } else if let Some(pairs) = url.query_pairs() {
-                        if let Some(tup) = pairs.iter().find(|tup| &tup.0[..] == "q") {
+                    } else {
+                        let mut pairs = url.query_pairs();
+                        if let Some(tup) = pairs.find(|tup| &tup.0[..] == "q") {
                             try!(server.send_privmsg(&chan,
                                  &format!("{}: https://duckduckgo.com/?q={}", user, tup.1.replace(" ", "+"))))
                         }

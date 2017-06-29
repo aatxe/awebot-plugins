@@ -1,13 +1,13 @@
 extern crate irc;
 
-use std::io::Result;
 use irc::client::prelude::*;
+use irc::error;
 
 static mut count: usize =  0;
 static mut flag: bool = false;
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
     if let Command::Response(Response::ERR_NICKNAMEINUSE, _, _) = message.command {
         unsafe { flag = true }
     }

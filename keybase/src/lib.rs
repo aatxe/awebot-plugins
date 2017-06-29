@@ -2,19 +2,19 @@ extern crate irc;
 extern crate hyper;
 extern crate rustc_serialize;
 
-use std::io::Result;
 use std::io::prelude::*;
 use hyper::Url;
 use hyper::client::Client;
-use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::error;
+use irc::proto::Command::PRIVMSG;
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
-    process_internal(server, &message)
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
+    process_internal(server, message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     let user = msg.source_nickname().unwrap_or("");
     if let PRIVMSG(ref chan, ref msg) = msg.command {
         let tokens: Vec<_> = msg.trim_right().split(" ").collect();

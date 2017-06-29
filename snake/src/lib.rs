@@ -2,16 +2,17 @@ extern crate irc;
 extern crate rand;
 
 use std::io::Result;
-use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::error;
+use irc::proto::Command::PRIVMSG;
 use rand::{thread_rng, Rng};
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     let user = msg.source_nickname().unwrap_or("");
     if let PRIVMSG(ref target, ref msg) = msg.command {
         let resp = if target.starts_with("#") {
@@ -32,7 +33,7 @@ pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: Ser
                 }
                 tmp
             };
-            try!(server.send_privmsg(resp, &snake));
+            server.send_privmsg(resp, &snake)?;
         }
     }
     Ok(())

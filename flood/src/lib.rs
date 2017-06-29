@@ -1,15 +1,15 @@
 extern crate irc;
 
-use std::io::Result;
-use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::error;
+use irc::proto::Command::PRIVMSG;
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
-    process_internal(server, &message)
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
+    process_internal(server, message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     let user = msg.source_nickname().unwrap_or("");
     if let PRIVMSG(ref chan, ref msg) = msg.command {
         if server.config().is_owner(user) {
@@ -19,15 +19,19 @@ pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: Ser
                 if let Ok(n) = tokens[2].parse() {
                     for i in 0..n {
                         if tokens.len() == 3 {
-                            try!(server.send_privmsg(target, &format!("@flood ({})", i)));
+                            server.send_privmsg(target, &format!("@flood ({})", i))?;
                         } else {
-                            try!(server.send_privmsg(target,
-                                            &msg[(9 + tokens[1].len() + tokens[2].len())..]));
+                            server.send_privmsg(
+                                target, &msg[(9 + tokens[1].len() + tokens[2].len())..]
+                            )?;
                         }
                     }
                 } else {
-                    try!(server.send_privmsg(if &chan[..] == server.config().nickname() { user }
-                         else { &chan }, &format!("{} is not a number.", tokens[2])));
+                    server.send_privmsg(if &chan[..] == server.config().nickname() {
+                        user
+                    } else {
+                        &chan
+                    }, &format!("{} is not a number.", tokens[2]))?;
                 }
             }
         }

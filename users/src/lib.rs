@@ -1,17 +1,17 @@
 extern crate irc;
 
-use std::io::Result;
 use irc::client::data::User;
 use irc::client::data::AccessLevel::*;
-use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::error;
+use irc::proto::Command::PRIVMSG;
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     if let PRIVMSG(ref chan, ref msg) = msg.command {
         if msg.starts_with("@users") {
             let stringify = |users: Vec<User>| -> String {

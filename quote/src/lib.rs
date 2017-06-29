@@ -2,16 +2,16 @@ extern crate irc;
 extern crate rand;
 extern crate rustc_serialize;
 
-use std::io::Result;
-use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::error;
+use irc::proto::Command::PRIVMSG;
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     let user = msg.source_nickname().unwrap_or("");
     if let PRIVMSG(ref chan, ref msg) = msg.command {
         let resp = if chan == server.config().nickname() {
@@ -25,8 +25,9 @@ pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: Ser
             let quote = &msg[11+tokens[1].len()..];
             quotes.add_quote(quote, tokens[1]);
             let _ = quotes.save();
-            try!(server.send_privmsg(resp, &format!("{}: I'll remember it as #{}.", user,
-                                                    quotes.get_latest_index())));
+            server.send_privmsg(
+                resp, &format!("{}: I'll remember it as #{}.", user, quotes.get_latest_index())
+            )?;
         } else if tokens[0] == "@quote" {
             let quotes = data::Quotes::load(server.config().server());
             let quote = if tokens.len() > 1 {
@@ -35,13 +36,12 @@ pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: Ser
                 quotes.get_random_quote()
             };
             match quote {
-                Some(q) =>
-                    try!(server.send_privmsg(resp, &format!("<{}> {}", q.sender, q.message))),
-                None => try!(server.send_privmsg(resp, if tokens.len() > 1 {
+                Some(q) => server.send_privmsg(resp, &format!("<{}> {}", q.sender, q.message))?,
+                None => server.send_privmsg(resp, if tokens.len() > 1 {
                     "There is no such quote."
                 } else {
                     "I don't know any quotes."
-                })),
+                })?,
             }
         }
     }

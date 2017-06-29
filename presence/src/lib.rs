@@ -1,16 +1,16 @@
 extern crate irc;
 
 use std::borrow::ToOwned;
-use std::io::Result;
-use irc::client::data::Command::{PART, PRIVMSG};
 use irc::client::prelude::*;
+use irc::error;
+use irc::proto::Command::{PART, PRIVMSG};
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     let user = msg.source_nickname().unwrap_or("");
     if let PRIVMSG(_, ref msg) = msg.command {
         let tokens: Vec<_> = msg.split(" ").collect();
@@ -18,13 +18,13 @@ pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: Ser
             if tokens.contains(&"join") {
                 for token in tokens.iter() {
                     if token.starts_with("#") {
-                        try!(server.send_join(token));
+                        server.send_join(token)?;
                     }
                 }
             } else if tokens.contains(&"part") {
                 for token in tokens.iter() {
                     if token.starts_with("#") {
-                        try!(server.send(PART((*token).to_owned(), None)));
+                        server.send(PART((*token).to_owned(), None))?;
                     }
                 }
             }

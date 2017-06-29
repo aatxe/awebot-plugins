@@ -5,16 +5,16 @@ extern crate regex;
 
 use std::borrow::ToOwned;
 use std::process::Command as IoCommand;
-use std::io::Result;
-use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::error;
+use irc::proto::Command::PRIVMSG;
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     println!("!!! WARNING: You have a very dangerous system plugin loaded. !!!");
     let user = msg.source_nickname().unwrap_or("");
     if let PRIVMSG(ref chan, ref msg) = msg.command {
@@ -28,9 +28,9 @@ pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: Ser
                     Err(e) => format!("Failed to execute command; {}.", e),
                 };
                 if &msg[..] == "" {
-                    try!(server.send_privmsg(&chan, "No output."));
+                    server.send_privmsg(&chan, "No output.")?;
                 } else {
-                    try!(server.send_privmsg(&chan, &msg));
+                    server.send_privmsg(&chan, &msg)?;
                 }
             }
         }

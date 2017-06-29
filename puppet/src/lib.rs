@@ -1,14 +1,15 @@
 extern crate irc;
 
-use std::io::Result;
-use irc::client::data::Command::PRIVMSG;
 use irc::client::prelude::*;
+use irc::error;
+use irc::proto::Command::PRIVMSG;
+
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     let user = msg.source_nickname().unwrap_or("");
     if let PRIVMSG(ref chan, ref msg) = msg.command {
         let tokens: Vec<_> = msg.split(" ").collect();
@@ -16,8 +17,11 @@ pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: Ser
         if server.config().is_owner(user) {
             if msg.starts_with("#") || msg.starts_with("$") {
                 if tokens.len() > 1 {
-                    try!(server.send_privmsg(if tokens[0].starts_with("$") { &tokens[0][1..] }
-                                             else { tokens[0] }, &msg[tokens[0].len()+1..]));
+                    server.send_privmsg(if tokens[0].starts_with("$") {
+                        &tokens[0][1..]
+                    } else {
+                        tokens[0]
+                    }, &msg[tokens[0].len()+1..])?;
                 }
             }
         }

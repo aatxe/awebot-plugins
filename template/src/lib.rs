@@ -1,14 +1,14 @@
 extern crate irc;
 
-use std::io::Result;
 use irc::client::prelude::*;
+use irc::error;
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     // TODO: plugin functionality
     Ok(())
 }

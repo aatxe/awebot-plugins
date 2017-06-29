@@ -2,16 +2,16 @@ extern crate irc;
 extern crate chrono;
 extern crate rustc_serialize;
 
-use std::io::Result;
 use irc::client::prelude::*;
-use irc::client::data::Command::PRIVMSG;
+use irc::error;
+use irc::proto::Command::PRIVMSG;
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
     process_internal(server, &message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     let user = msg.source_nickname().unwrap_or("");
     println!("{:?}", msg);
     if let PRIVMSG(ref chan, ref msg) = msg.command {
@@ -31,9 +31,9 @@ pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: Ser
                        Err(_) => format!("{}: Something bad happened.", user)
                     }
                 };
-                try!(server.send_privmsg(replyto, &response));
+                server.send_privmsg(replyto, &response)?;
             } else {
-                try!(server.send_privmsg(replyto, &format!("{}: Expecting a offset from UTC in the form +/-HHmm.", user)));
+                server.send_privmsg(replyto, &format!("{}: Expecting a offset from UTC in the form +/-HHmm.", user))?;
             }
         } else if let Some(who) = msg.splitn(2, "@timefor ").nth(1) {
             let response = match data::TzOf::load(user) {
@@ -42,7 +42,7 @@ pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: Ser
                 Err(_) =>
                     format!("{}: I don't know {}'s timezone.", user, who)
             };
-            try!(server.send_privmsg(replyto, &response));
+            server.send_privmsg(replyto, &response)?;
         }
     }
     Ok(())
@@ -52,9 +52,9 @@ fn parse_tz(tz: &str) -> std::result::Result<i32, ()> {
     if tz.len() != 5 {
         Err(())
     } else {
-        Ok(try!(match &tz[0..1] { "+" => Ok(1), "-" => Ok(-1), _ => Err(()) })
-           * (try!(tz[1..3].parse::<i32>().map_err(|_| ())) * 3600
-           + try!(tz[3..5].parse::<i32>().map_err(|_| ())) * 60))
+        Ok(match &tz[0..1] { "+" => Ok(1), "-" => Ok(-1), _ => Err(()) }?
+           * (tz[1..3].parse::<i32>().map_err(|_| ())? * 3600
+           + tz[3..5].parse::<i32>().map_err(|_| ())? * 60))
     }
 }
 

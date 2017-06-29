@@ -1,18 +1,18 @@
 extern crate irc;
 
-use std::io::Result;
 use irc::client::prelude::*;
-use irc::client::data::Command::INVITE;
+use irc::error;
+use irc::proto::Command::INVITE;
 
 #[no_mangle]
-pub extern fn process(server: &IrcServer, message: Message) -> Result<()> {
-    process_internal(server, &message)
+pub extern fn process(server: &IrcServer, message: &Message) -> error::Result<()> {
+    process_internal(server, message)
 }
 
-pub fn process_internal<S>(server: &S, msg: &Message) -> Result<()> where S: ServerExt {
+pub fn process_internal<S>(server: &S, msg: &Message) -> error::Result<()> where S: ServerExt {
     if let INVITE(ref nick, ref chan) = msg.command {
         if nick == server.config().nickname() {
-            try!(server.send_join(chan));
+            server.send_join(chan)?;
         }
     }
     Ok(())
